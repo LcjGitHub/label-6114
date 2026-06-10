@@ -1,0 +1,66 @@
+# 杂志交换记录 MVP
+
+前后端分离的全栈 MVP：管理杂志/书籍交换记录（书名、对方昵称、寄出/收到日期、完成状态）。
+
+## 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| 前端 | Vue 3 + Vite + TypeScript + Naive UI，端口 **5101** |
+| 后端 | FastAPI + SQLAlchemy + SQLite（`backend/data/zine.db`），端口 **5000** |
+
+## 目录结构
+
+```
+├── backend/          # FastAPI 后端
+├── frontend/         # Vue 3 前端
+└── README.md
+```
+
+## 启动方式
+
+### 1. 后端（一条命令）
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # macOS / Linux
+pip install -r requirements.txt
+uvicorn main:app --reload --port 5000
+```
+
+首次启动会自动创建 SQLite 数据库并写入 **5 条** seed 数据。
+
+API 文档：http://127.0.0.1:5000/docs
+
+### 2. 前端
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+浏览器访问：http://localhost:5101
+
+> 前端通过 Vite 代理将 `/api` 请求转发到后端 `5000` 端口，请先启动后端。
+
+## 功能
+
+- **页面 1 · 交换记录列表**：`n-data-table` 展示全部记录，状态列用 `n-tag` 区分「已完成 / 进行中」，支持编辑、删除
+- **页面 2 · 新增/编辑**：`n-form` 表单，字段包括书名、对方昵称、寄出日期、收到日期、是否完成
+
+## API 概览
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/exchanges` | 列表 |
+| GET | `/api/exchanges/{id}` | 详情 |
+| POST | `/api/exchanges` | 新增 |
+| PUT | `/api/exchanges/{id}` | 更新 |
+| DELETE | `/api/exchanges/{id}` | 删除 |
+
+## 依赖说明
+
+所有依赖均在项目目录内安装（Python venv + 前端 `node_modules`），无需全局 pnpm/yarn。
