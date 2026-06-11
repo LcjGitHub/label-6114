@@ -15,8 +15,9 @@ import {
   type DataTableColumns,
   type SelectOption,
 } from 'naive-ui'
-import { deleteExchange, exportExchanges, fetchExchanges } from '@/api/exchange'
+import { deleteExchange, exportExchanges, fetchExchanges, fetchStatistics } from '@/api/exchange'
 import type { Exchange } from '@/types/exchange'
+import type { Statistics } from '@/types/exchange'
 
 const router = useRouter()
 const message = useMessage()
@@ -30,6 +31,7 @@ const exporting = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const statistics = ref<Statistics>({ total_count: 0, completed_count: 0, in_progress_count: 0 })
 
 const statusOptions: SelectOption[] = [
   { label: '全部状态', value: '' },
@@ -85,8 +87,17 @@ function handlePageSizeChange(size: number) {
   loadExchanges()
 }
 
+async function loadStatistics() {
+  try {
+    statistics.value = await fetchStatistics()
+  } catch {
+    // silent
+  }
+}
+
 onMounted(() => {
   loadExchanges()
+  loadStatistics()
 })
 
 function formatDate(value: string | null) {
@@ -185,6 +196,7 @@ function handleDelete(row: Exchange) {
           currentPage.value -= 1
         }
         await loadExchanges()
+        loadStatistics()
       } catch {
         message.error('删除失败')
       }
@@ -213,6 +225,17 @@ function handleDelete(row: Exchange) {
       <n-button type="primary" :loading="exporting" @click="handleExport">
         导出记录
       </n-button>
+    </n-space>
+    <n-space :size="24" align="center">
+      <n-tag :bordered="false" type="info" size="medium">
+        总记录 {{ statistics.total_count }}
+      </n-tag>
+      <n-tag :bordered="false" type="success" size="medium">
+        已完成 {{ statistics.completed_count }}
+      </n-tag>
+      <n-tag :bordered="false" type="warning" size="medium">
+        进行中 {{ statistics.in_progress_count }}
+      </n-tag>
     </n-space>
     <n-data-table
       :columns="columns"
