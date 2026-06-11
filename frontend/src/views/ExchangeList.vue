@@ -15,7 +15,7 @@ import {
   type DataTableColumns,
   type SelectOption,
 } from 'naive-ui'
-import { deleteExchange, exportExchanges, fetchExchanges, fetchStatistics } from '@/api/exchange'
+import { batchDeleteExchanges, deleteExchange, exportExchanges, fetchExchanges, fetchStatistics } from '@/api/exchange'
 import type { Exchange } from '@/types/exchange'
 import type { Statistics } from '@/types/exchange'
 
@@ -32,6 +32,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const statistics = ref<Statistics>({ total_count: 0, completed_count: 0, in_progress_count: 0 })
+const checkedRowKeys = ref<number[]>([])
 
 const statusOptions: SelectOption[] = [
   { label: '全部状态', value: '' },
@@ -54,6 +55,7 @@ async function loadExchanges() {
     }
     exchanges.value = result.items
     total.value = result.total
+    checkedRowKeys.value = []
   } catch {
     message.error('加载列表失败')
   } finally {
@@ -110,6 +112,10 @@ function formatDate(value: string | null) {
 }
 
 const columns: DataTableColumns<Exchange> = [
+  {
+    type: 'selection',
+    options: ['all', 'none'],
+  },
   { title: '书名', key: 'book_title', ellipsis: { tooltip: true } },
   { title: '对方昵称', key: 'counterpart_nickname' },
   {
@@ -207,6 +213,33 @@ function handleDelete(row: Exchange) {
     },
   })
 }
+
+function handleBatchDelete() {
+  if (checkedRowKeys.value.length === 0) {
+    message.warning('请先选择要删除的记录')
+    return
+  }
+  dialog.warning({
+    title: '确认批量删除',
+    content: `确定删除选中的 ${checkedRowKeys.value.length} 条交换记录吗？`,
+    positiveText: '删除',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await batchDeleteExchanges(checkedRowKeys.value)
+        message.success('批量删除成功')
+        const deletedCount = checkedRowKeys.value.length
+        if (exchanges.value.length === deletedCount && currentPage.value > 1) {
+          currentPage.value -= 1
+        }
+        await loadExchanges()
+        loadStatistics()
+      } catch {
+        message.error('批量删除失败')
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -225,6 +258,13 @@ function handleDelete(row: Exchange) {
           style="width: 160px"
           @update:value="handleStatusChange"
         />
+        <n-button
+          v-if="checkedRowKeys.length > 0"
+          type="error"
+          @click="handleBatchDelete"
+        >
+          批量删除 ({{ checkedRowKeys.length }})
+        </n-button>
       </n-space>
       <n-button type="primary" :loading="exporting" @click="handleExport">
         导出记录
@@ -247,6 +287,8 @@ function handleDelete(row: Exchange) {
       :loading="isFetching"
       :bordered="false"
       striped
+      :row-key="(row: Exchange) => row.id"
+      v-model:checked-row-keys="checkedRowKeys"
     />
     <n-pagination
       :page="currentPage"

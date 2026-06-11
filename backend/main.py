@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from database import Base, SessionLocal, engine, get_db
 from models import Contact, Exchange
-from schemas import ContactCreate, ContactOut, ContactUpdate, ExchangeCreate, ExchangeOut, ExchangeUpdate, PaginatedOut, StatisticsOut
+from schemas import BatchDeleteIn, ContactCreate, ContactOut, ContactUpdate, ExchangeCreate, ExchangeOut, ExchangeUpdate, PaginatedOut, StatisticsOut
 from seed import seed_contacts, seed_exchanges
 
 Base.metadata.create_all(bind=engine)
@@ -141,6 +141,16 @@ def delete_exchange(exchange_id: int, db: Session = Depends(get_db)):
     db.commit()
 
 
+@app.post("/api/exchanges/batch-delete", status_code=204)
+def batch_delete_exchanges(payload: BatchDeleteIn, db: Session = Depends(get_db)):
+    if not payload.ids:
+        raise HTTPException(status_code=400, detail="请选择要删除的记录")
+    deleted_count = db.query(Exchange).filter(Exchange.id.in_(payload.ids)).delete(synchronize_session=False)
+    db.commit()
+    if deleted_count == 0:
+        raise HTTPException(status_code=404, detail="未找到要删除的记录")
+
+
 @app.get("/api/statistics", response_model=StatisticsOut)
 def get_statistics(db: Session = Depends(get_db)):
     total_count = db.query(Exchange).count()
@@ -203,3 +213,13 @@ def delete_contact(contact_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="联系人不存在")
     db.delete(contact)
     db.commit()
+
+
+@app.post("/api/contacts/batch-delete", status_code=204)
+def batch_delete_contacts(payload: BatchDeleteIn, db: Session = Depends(get_db)):
+    if not payload.ids:
+        raise HTTPException(status_code=400, detail="请选择要删除的联系人")
+    deleted_count = db.query(Contact).filter(Contact.id.in_(payload.ids)).delete(synchronize_session=False)
+    db.commit()
+    if deleted_count == 0:
+        raise HTTPException(status_code=404, detail="未找到要删除的联系人")

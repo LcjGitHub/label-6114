@@ -39,6 +39,10 @@ export async function deleteExchange(id: number): Promise<void> {
   await api.delete(`/exchanges/${id}`)
 }
 
+export async function batchDeleteExchanges(ids: number[]): Promise<void> {
+  await api.post('/exchanges/batch-delete', { ids })
+}
+
 export async function fetchStatistics(): Promise<Statistics> {
   const { data } = await api.get<Statistics>('/statistics')
   return data
