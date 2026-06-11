@@ -213,13 +213,3 @@ def delete_contact(contact_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="联系人不存在")
     db.delete(contact)
     db.commit()
-
-
-@app.post("/api/contacts/batch-delete", status_code=204)
-def batch_delete_contacts(payload: BatchDeleteIn, db: Session = Depends(get_db)):
-    if not payload.ids:
-        raise HTTPException(status_code=400, detail="请选择要删除的联系人")
-    deleted_count = db.query(Contact).filter(Contact.id.in_(payload.ids)).delete(synchronize_session=False)
-    db.commit()
-    if deleted_count == 0:
-        raise HTTPException(status_code=404, detail="未找到要删除的联系人")

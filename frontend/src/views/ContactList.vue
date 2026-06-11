@@ -11,7 +11,7 @@ import {
   useMessage,
   type DataTableColumns,
 } from 'naive-ui'
-import { batchDeleteContacts, deleteContact, fetchContacts } from '@/api/contact'
+import { deleteContact, fetchContacts } from '@/api/contact'
 import type { Contact } from '@/types/contact'
 
 const router = useRouter()
@@ -23,7 +23,6 @@ const pageSize = ref(10)
 const total = ref(0)
 const isFetching = ref(false)
 const contacts = ref<Contact[]>([])
-const checkedRowKeys = ref<number[]>([])
 
 async function loadContacts() {
   isFetching.value = true
@@ -38,7 +37,6 @@ async function loadContacts() {
     }
     contacts.value = result.items
     total.value = result.total
-    checkedRowKeys.value = []
   } catch {
     message.error('加载联系人列表失败')
   } finally {
@@ -60,10 +58,6 @@ function handlePageSizeChange(size: number) {
 }
 
 const columns: DataTableColumns<Contact> = [
-  {
-    type: 'selection',
-    options: ['all', 'none'],
-  },
   { title: '昵称', key: 'nickname', ellipsis: { tooltip: true } },
   { title: '联系方式', key: 'contact_info', ellipsis: { tooltip: true } },
   {
@@ -113,55 +107,16 @@ function handleDelete(row: Contact) {
     },
   })
 }
-
-function handleBatchDelete() {
-  if (checkedRowKeys.value.length === 0) {
-    message.warning('请先选择要删除的联系人')
-    return
-  }
-  dialog.warning({
-    title: '确认批量删除',
-    content: `确定删除选中的 ${checkedRowKeys.value.length} 位联系人吗？`,
-    positiveText: '删除',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      try {
-        await batchDeleteContacts(checkedRowKeys.value)
-        message.success('批量删除成功')
-        const deletedCount = checkedRowKeys.value.length
-        if (contacts.value.length === deletedCount && currentPage.value > 1) {
-          currentPage.value -= 1
-        }
-        await loadContacts()
-      } catch {
-        message.error('批量删除失败')
-      }
-    },
-  })
-}
 </script>
 
 <template>
   <n-space vertical :size="16" style="width: 100%">
-    <n-space justify="space-between">
-      <n-space>
-        <n-button
-          v-if="checkedRowKeys.length > 0"
-          type="error"
-          @click="handleBatchDelete"
-        >
-          批量删除 ({{ checkedRowKeys.length }})
-        </n-button>
-      </n-space>
-    </n-space>
     <n-data-table
       :columns="columns"
       :data="contacts"
       :loading="isFetching"
       :bordered="false"
       striped
-      :row-key="(row: Contact) => row.id"
-      v-model:checked-row-keys="checkedRowKeys"
     />
     <n-pagination
       :page="currentPage"

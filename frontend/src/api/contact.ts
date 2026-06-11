@@ -36,7 +36,3 @@ export async function updateContact(
 export async function deleteContact(id: number): Promise<void> {
   await api.delete(`/contacts/${id}`)
 }
-
-export async function batchDeleteContacts(ids: number[]): Promise<void> {
-  await api.post('/contacts/batch-delete', { ids })
-}
