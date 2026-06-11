@@ -1,35 +1,57 @@
 <script setup lang="ts">
-import { h, computed, watch } from 'vue'
+import { h, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useFetch } from '@vueuse/core'
 import {
   NButton,
   NDataTable,
+  NPagination,
   NSpace,
   NTag,
   useDialog,
   useMessage,
   type DataTableColumns,
 } from 'naive-ui'
-import { deleteContact } from '@/api/contact'
+import { deleteContact, fetchContacts } from '@/api/contact'
 import type { Contact } from '@/types/contact'
 
 const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 
-const { data, isFetching, error, execute } = useFetch('/api/contacts', {
-  immediate: true,
-  refetch: true,
-}).json<Contact[]>()
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const isFetching = ref(false)
+const contacts = ref<Contact[]>([])
 
-watch(error, (err) => {
-  if (err) {
+async function loadContacts() {
+  isFetching.value = true
+  try {
+    const result = await fetchContacts({
+      page: currentPage.value,
+      page_size: pageSize.value,
+    })
+    contacts.value = result.items
+    total.value = result.total
+  } catch {
     message.error('加载联系人列表失败')
+  } finally {
+    isFetching.value = false
   }
-})
+}
 
-const contacts = computed(() => data.value ?? [])
+loadContacts()
+
+function handlePageChange(page: number) {
+  currentPage.value = page
+  loadContacts()
+}
+
+function handlePageSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+  loadContacts()
+}
 
 const columns: DataTableColumns<Contact> = [
   { title: '昵称', key: 'nickname', ellipsis: { tooltip: true } },
@@ -71,7 +93,7 @@ function handleDelete(row: Contact) {
       try {
         await deleteContact(row.id)
         message.success('已删除')
-        await execute()
+        await loadContacts()
       } catch {
         message.error('删除失败')
       }
@@ -81,11 +103,22 @@ function handleDelete(row: Contact) {
 </script>
 
 <template>
-  <n-data-table
-    :columns="columns"
-    :data="contacts"
-    :loading="isFetching"
-    :bordered="false"
-    striped
-  />
+  <n-space vertical :size="16" style="width: 100%">
+    <n-data-table
+      :columns="columns"
+      :data="contacts"
+      :loading="isFetching"
+      :bordered="false"
+      striped
+    />
+    <n-pagination
+      :page="currentPage"
+      :page-size="pageSize"
+      :item-count="total"
+      :page-sizes="[10, 20, 50]"
+      show-size-picker
+      @update:page="handlePageChange"
+      @update:page-size="handlePageSizeChange"
+    />
+  </n-space>
 </template>

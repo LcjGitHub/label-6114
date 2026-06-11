@@ -6,6 +6,7 @@ import {
   NButton,
   NDataTable,
   NInput,
+  NPagination,
   NSelect,
   NSpace,
   NTag,
@@ -26,6 +27,9 @@ const status = ref<'completed' | 'in_progress' | ''>('')
 const exchanges = ref<Exchange[]>([])
 const isFetching = ref(false)
 const exporting = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
 
 const statusOptions: SelectOption[] = [
   { label: '全部状态', value: '' },
@@ -36,10 +40,14 @@ const statusOptions: SelectOption[] = [
 async function loadExchanges() {
   isFetching.value = true
   try {
-    exchanges.value = await fetchExchanges({
+    const result = await fetchExchanges({
       keyword: keyword.value || undefined,
       status: status.value || undefined,
+      page: currentPage.value,
+      page_size: pageSize.value,
     })
+    exchanges.value = result.items
+    total.value = result.total
   } catch {
     message.error('加载列表失败')
   } finally {
@@ -48,6 +56,7 @@ async function loadExchanges() {
 }
 
 function handleStatusChange() {
+  currentPage.value = 1
   loadExchanges()
 }
 
@@ -56,9 +65,21 @@ let searchTimer: ReturnType<typeof setTimeout> | null = null
 watch(keyword, () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
+    currentPage.value = 1
     loadExchanges()
   }, 300)
 })
+
+function handlePageChange(page: number) {
+  currentPage.value = page
+  loadExchanges()
+}
+
+function handlePageSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+  loadExchanges()
+}
 
 onMounted(() => {
   loadExchanges()
@@ -192,6 +213,15 @@ function handleDelete(row: Exchange) {
       :loading="isFetching"
       :bordered="false"
       striped
+    />
+    <n-pagination
+      :page="currentPage"
+      :page-size="pageSize"
+      :item-count="total"
+      :page-sizes="[10, 20, 50]"
+      show-size-picker
+      @update:page="handlePageChange"
+      @update:page-size="handlePageSizeChange"
     />
   </n-space>
 </template>

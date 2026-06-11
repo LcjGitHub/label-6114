@@ -1,12 +1,17 @@
 import axios from 'axios'
-import type { Contact, ContactFormData } from '@/types/contact'
+import type { Contact, ContactFormData, PaginatedResult } from '@/types/contact'
 
 const api = axios.create({
   baseURL: '/api',
 })
 
-export async function fetchContacts(): Promise<Contact[]> {
-  const { data } = await api.get<Contact[]>('/contacts')
+export interface ContactQueryParams {
+  page?: number
+  page_size?: number
+}
+
+export async function fetchContacts(params?: ContactQueryParams): Promise<PaginatedResult<Contact>> {
+  const { data } = await api.get<PaginatedResult<Contact>>('/contacts', { params })
   return data
 }
 

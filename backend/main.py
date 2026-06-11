@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from database import Base, SessionLocal, engine, get_db
 from models import Contact, Exchange
-from schemas import ContactCreate, ContactOut, ContactUpdate, ExchangeCreate, ExchangeOut, ExchangeUpdate, StatisticsOut
+from schemas import ContactCreate, ContactOut, ContactUpdate, ExchangeCreate, ExchangeOut, ExchangeUpdate, PaginatedOut, StatisticsOut
 from seed import seed_contacts, seed_exchanges
 
 Base.metadata.create_all(bind=engine)
@@ -45,10 +45,12 @@ def on_startup():
         db.close()
 
 
-@app.get("/api/exchanges", response_model=list[ExchangeOut])
+@app.get("/api/exchanges", response_model=PaginatedOut[ExchangeOut])
 def list_exchanges(
     keyword: str | None = Query(default=None, description="关键词，匹配书名或对方昵称"),
     status: str | None = Query(default=None, description="状态：completed-已完成，in_progress-进行中"),
+    page: int = Query(default=1, ge=1, description="页码"),
+    page_size: int = Query(default=10, ge=1, le=100, description="每页条数"),
     db: Session = Depends(get_db),
 ):
     query = db.query(Exchange)
@@ -61,7 +63,9 @@ def list_exchanges(
         query = query.filter(Exchange.is_completed == True)
     elif status == "in_progress":
         query = query.filter(Exchange.is_completed == False)
-    return query.order_by(Exchange.id.desc()).all()
+    total = query.count()
+    items = query.order_by(Exchange.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    return PaginatedOut(items=items, total=total)
 
 
 def generate_csv(db: Session):
@@ -149,9 +153,16 @@ def get_statistics(db: Session = Depends(get_db)):
     )
 
 
-@app.get("/api/contacts", response_model=list[ContactOut])
-def list_contacts(db: Session = Depends(get_db)):
-    return db.query(Contact).order_by(Contact.id.desc()).all()
+@app.get("/api/contacts", response_model=PaginatedOut[ContactOut])
+def list_contacts(
+    page: int = Query(default=1, ge=1, description="页码"),
+    page_size: int = Query(default=10, ge=1, le=100, description="每页条数"),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Contact)
+    total = query.count()
+    items = query.order_by(Contact.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    return PaginatedOut(items=items, total=total)
 
 
 @app.get("/api/contacts/{contact_id}", response_model=ContactOut)

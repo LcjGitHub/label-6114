@@ -1,3 +1,8 @@
+export interface PaginatedResult<T> {
+  items: T[]
+  total: number
+}
+
 export interface Exchange {
   id: number
   book_title: string

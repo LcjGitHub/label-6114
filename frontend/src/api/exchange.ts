@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Exchange, ExchangeFormData, Statistics } from '@/types/exchange'
+import type { Exchange, ExchangeFormData, PaginatedResult, Statistics } from '@/types/exchange'
 
 const api = axios.create({
   baseURL: '/api',
@@ -8,10 +8,12 @@ const api = axios.create({
 export interface ExchangeQueryParams {
   keyword?: string
   status?: 'completed' | 'in_progress' | ''
+  page?: number
+  page_size?: number
 }
 
-export async function fetchExchanges(params?: ExchangeQueryParams): Promise<Exchange[]> {
-  const { data } = await api.get<Exchange[]>('/exchanges', { params })
+export async function fetchExchanges(params?: ExchangeQueryParams): Promise<PaginatedResult<Exchange>> {
+  const { data } = await api.get<PaginatedResult<Exchange>>('/exchanges', { params })
   return data
 }
 

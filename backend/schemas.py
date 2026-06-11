@@ -1,6 +1,18 @@
 from datetime import date
 
+from typing import Generic, TypeVar
+
 from pydantic import BaseModel, ConfigDict
+
+
+T = TypeVar("T")
+
+
+class PaginatedOut(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExchangeBase(BaseModel):

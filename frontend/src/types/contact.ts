@@ -1,3 +1,8 @@
+export interface PaginatedResult<T> {
+  items: T[]
+  total: number
+}
+
 export interface Contact {
   id: number
   nickname: string
