@@ -72,7 +72,7 @@ async function loadExchange() {
     }
   } catch {
     message.error('加载记录失败')
-    router.push('/')
+    router.push('/list')
   } finally {
     loading.value = false
   }
@@ -89,7 +89,7 @@ async function handleSubmit() {
       await createExchange(form.value)
       message.success('已创建')
     }
-    router.push('/')
+    router.push('/list')
   } catch {
     message.error(isEdit.value ? '更新失败' : '创建失败')
   } finally {
@@ -128,7 +128,7 @@ onMounted(loadExchange)
           <n-button type="primary" :loading="submitting" @click="handleSubmit">
             {{ isEdit ? '保存' : '创建' }}
           </n-button>
-          <n-button @click="router.push('/')">返回</n-button>
+          <n-button @click="router.push('/list')">返回</n-button>
         </n-space>
       </n-form-item>
     </n-form>

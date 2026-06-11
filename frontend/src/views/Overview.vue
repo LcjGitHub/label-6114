@@ -1,11 +1,26 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { NCard, NGrid, NGridItem, NStatistic, NSpace, NSpin } from 'naive-ui'
+import { useBreakpoints } from '@vueuse/core'
+import { NCard, NGrid, NGridItem, NStatistic, NSpace, NSpin, useMessage } from 'naive-ui'
 import { fetchStatistics } from '@/api/exchange'
 import type { Statistics } from '@/types/exchange'
 
+const breakpoints = useBreakpoints({
+  xs: 0,
+  sm: 640,
+  md: 960,
+})
+
+const message = useMessage()
+
 const statistics = ref<Statistics | null>(null)
 const loading = ref(true)
+
+const gridCols = computed(() => {
+  if (breakpoints.smaller('sm').value) return 1
+  if (breakpoints.smaller('md').value) return 2
+  return 3
+})
 
 const totalCount = computed(() => statistics.value?.total_count ?? 0)
 const completedCount = computed(() => statistics.value?.completed_count ?? 0)
@@ -19,6 +34,8 @@ const completedPercent = computed(() => {
 onMounted(async () => {
   try {
     statistics.value = await fetchStatistics()
+  } catch {
+    message.error('加载统计数据失败')
   } finally {
     loading.value = false
   }
@@ -29,7 +46,7 @@ onMounted(async () => {
   <n-space vertical size="large">
     <h2 style="margin: 0; font-size: 22px">数据概览</h2>
     <n-spin :show="loading">
-      <n-grid :cols="3" :x-gap="16" responsive="screen">
+      <n-grid :cols="gridCols" :x-gap="16" :y-gap="16">
         <n-grid-item>
           <n-card hoverable>
             <n-statistic label="总记录数" :value="totalCount">
