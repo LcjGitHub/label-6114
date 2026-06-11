@@ -51,6 +51,16 @@ class RecentExchangeOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class OverdueExchangeOut(BaseModel):
+    id: int
+    book_title: str
+    counterpart_nickname: str
+    sent_date: date | None
+    overdue_days: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class StatisticsOut(BaseModel):
     total_count: int
     completed_count: int

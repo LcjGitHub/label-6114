@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  NBadge,
   NConfigProvider,
   NLayout,
   NLayoutHeader,
@@ -12,10 +13,26 @@ import {
   dateZhCN,
 } from 'naive-ui'
 import { useRouter, useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { fetchOverdueExchanges } from '@/api/exchange'
 
 const router = useRouter()
 const route = useRoute()
+
+const overdueCount = ref(0)
+
+async function loadOverdueCount() {
+  try {
+    const list = await fetchOverdueExchanges()
+    overdueCount.value = list.length
+  } catch {
+    overdueCount.value = 0
+  }
+}
+
+onMounted(() => {
+  loadOverdueCount()
+})
 
 const isContactActive = computed(() =>
   ['contacts', 'contact-create', 'contact-edit', 'contact-detail'].includes(route.name as string)
@@ -26,6 +43,8 @@ const isExchangeActive = computed(() =>
 )
 
 const isTrendActive = computed(() => route.name === 'trend')
+
+const isOverdueActive = computed(() => route.name === 'overdue')
 
 const isLabelActive = computed(() =>
   ['labels', 'label-create', 'label-edit'].includes(route.name as string)
@@ -55,6 +74,15 @@ const isLabelActive = computed(() =>
             >
               趋势分析
             </n-button>
+            <n-badge :value="overdueCount" :max="99" :show-zero="false" type="error" processing>
+              <n-button
+                quaternary
+                :type="isOverdueActive ? 'primary' : 'default'"
+                @click="router.push('/overdue')"
+              >
+                逾期提醒
+              </n-button>
+            </n-badge>
             <n-button
               quaternary
               :type="isExchangeActive ? 'primary' : 'default'"

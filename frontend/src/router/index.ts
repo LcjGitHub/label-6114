@@ -9,12 +9,14 @@ import ContactDetail from '@/views/ContactDetail.vue'
 import TrendAnalysis from '@/views/TrendAnalysis.vue'
 import LabelList from '@/views/LabelList.vue'
 import LabelForm from '@/views/LabelForm.vue'
+import OverdueReminder from '@/views/OverdueReminder.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'overview', component: Overview },
     { path: '/trend', name: 'trend', component: TrendAnalysis },
+    { path: '/overdue', name: 'overdue', component: OverdueReminder },
     { path: '/list', name: 'list', component: ExchangeList },
     { path: '/new', name: 'create', component: ExchangeForm },
     { path: '/edit/:id', name: 'edit', component: ExchangeForm, props: true },

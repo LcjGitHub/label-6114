@@ -10,7 +10,7 @@ from fastapi import Depends
 
 from database import get_db
 from models import Exchange
-from schemas import BatchDeleteIn, ExchangeCreate, ExchangeOut, ExchangeUpdate, ImportResultOut, MonthlyStatsOut, MonthlyStatsItem, PaginatedOut, StatisticsOut
+from schemas import BatchDeleteIn, ExchangeCreate, ExchangeOut, ExchangeUpdate, ImportResultOut, MonthlyStatsOut, MonthlyStatsItem, OverdueExchangeOut, PaginatedOut, StatisticsOut
 
 router = APIRouter(prefix="/api", tags=["exchanges"])
 
@@ -43,6 +43,34 @@ def list_exchanges(
         query = query.order_by(Exchange.id.desc())
     items = query.offset((page - 1) * page_size).limit(page_size).all()
     return PaginatedOut(items=items, total=total)
+
+
+@router.get("/exchanges/overdue", response_model=list[OverdueExchangeOut])
+def list_overdue_exchanges(db: Session = Depends(get_db)):
+    today = date.today()
+    query = (
+        db.query(Exchange)
+        .filter(Exchange.is_completed == False)
+        .filter(Exchange.sent_date.isnot(None))
+    )
+    exchanges = query.all()
+    overdue_list: list[OverdueExchangeOut] = []
+    for exchange in exchanges:
+        if exchange.sent_date:
+            delta = today - exchange.sent_date
+            overdue_days = delta.days - 30
+            if overdue_days > 0:
+                overdue_list.append(
+                    OverdueExchangeOut(
+                        id=exchange.id,
+                        book_title=exchange.book_title,
+                        counterpart_nickname=exchange.counterpart_nickname,
+                        sent_date=exchange.sent_date,
+                        overdue_days=overdue_days,
+                    )
+                )
+    overdue_list.sort(key=lambda x: x.overdue_days, reverse=True)
+    return overdue_list
 
 
 def generate_csv(db: Session):

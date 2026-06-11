@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Exchange, ExchangeFormData, ImportResult, MonthlyStats, PaginatedResult, Statistics } from '@/types/exchange'
+import type { Exchange, ExchangeFormData, ImportResult, MonthlyStats, OverdueExchange, PaginatedResult, Statistics } from '@/types/exchange'
 
 const api = axios.create({
   baseURL: '/api',
@@ -69,5 +69,10 @@ export async function importExchanges(file: File): Promise<ImportResult> {
       'Content-Type': 'multipart/form-data',
     },
   })
+  return data
+}
+
+export async function fetchOverdueExchanges(): Promise<OverdueExchange[]> {
+  const { data } = await api.get<OverdueExchange[]>('/exchanges/overdue')
   return data
 }

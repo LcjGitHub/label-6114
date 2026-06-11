@@ -50,3 +50,11 @@ export interface ImportResult {
   failure_count: number
   errors: string[]
 }
+
+export interface OverdueExchange {
+  id: number
+  book_title: string
+  counterpart_nickname: string
+  sent_date: string | null
+  overdue_days: number
+}
