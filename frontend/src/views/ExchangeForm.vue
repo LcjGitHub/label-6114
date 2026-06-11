@@ -27,6 +27,7 @@ const message = useMessage()
 const formRef = ref<FormInst | null>(null)
 const submitting = ref(false)
 const loading = ref(false)
+const dateAutoCompleted = ref(false)
 
 const isEdit = computed(() => Boolean(props.id))
 
@@ -55,7 +56,17 @@ const receivedTimestamp = computed({
   get: () =>
     form.value.received_date ? parseISO(form.value.received_date).getTime() : null,
   set: (value: number | null) => {
+    const hadDate = form.value.received_date !== null
     form.value.received_date = value ? format(new Date(value), 'yyyy-MM-dd') : null
+    if (value) {
+      if (!form.value.is_completed) {
+        dateAutoCompleted.value = true
+      }
+      form.value.is_completed = true
+    } else if (hadDate && dateAutoCompleted.value) {
+      form.value.is_completed = false
+      dateAutoCompleted.value = false
+    }
   },
 })
 
@@ -78,6 +89,10 @@ async function loadExchange() {
   } finally {
     loading.value = false
   }
+}
+
+function onCompletedManualToggle() {
+  dateAutoCompleted.value = false
 }
 
 async function handleSubmit() {
@@ -123,7 +138,7 @@ onMounted(loadExchange)
         />
       </n-form-item>
       <n-form-item label="是否完成" path="is_completed">
-        <n-switch v-model:value="form.is_completed" />
+        <n-switch v-model:value="form.is_completed" @update:value="onCompletedManualToggle" />
       </n-form-item>
       <n-form-item label="备注" path="notes">
         <n-input
