@@ -3,9 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from database import Base, SessionLocal, engine, get_db
-from models import Exchange
-from schemas import ExchangeCreate, ExchangeOut, ExchangeUpdate, StatisticsOut
-from seed import seed_exchanges
+from models import Contact, Exchange
+from schemas import ContactCreate, ContactOut, ContactUpdate, ExchangeCreate, ExchangeOut, ExchangeUpdate, StatisticsOut
+from seed import seed_contacts, seed_exchanges
 
 Base.metadata.create_all(bind=engine)
 
@@ -25,6 +25,7 @@ def on_startup():
     db = SessionLocal()
     try:
         seed_exchanges(db)
+        seed_contacts(db)
     finally:
         db.close()
 
@@ -84,3 +85,48 @@ def get_statistics(db: Session = Depends(get_db)):
         completed_count=completed_count,
         in_progress_count=in_progress_count,
     )
+
+
+@app.get("/api/contacts", response_model=list[ContactOut])
+def list_contacts(db: Session = Depends(get_db)):
+    return db.query(Contact).order_by(Contact.id.desc()).all()
+
+
+@app.get("/api/contacts/{contact_id}", response_model=ContactOut)
+def get_contact(contact_id: int, db: Session = Depends(get_db)):
+    contact = db.get(Contact, contact_id)
+    if not contact:
+        raise HTTPException(status_code=404, detail="联系人不存在")
+    return contact
+
+
+@app.post("/api/contacts", response_model=ContactOut, status_code=201)
+def create_contact(payload: ContactCreate, db: Session = Depends(get_db)):
+    contact = Contact(**payload.model_dump())
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
+    return contact
+
+
+@app.put("/api/contacts/{contact_id}", response_model=ContactOut)
+def update_contact(
+    contact_id: int, payload: ContactUpdate, db: Session = Depends(get_db)
+):
+    contact = db.get(Contact, contact_id)
+    if not contact:
+        raise HTTPException(status_code=404, detail="联系人不存在")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(contact, key, value)
+    db.commit()
+    db.refresh(contact)
+    return contact
+
+
+@app.delete("/api/contacts/{contact_id}", status_code=204)
+def delete_contact(contact_id: int, db: Session = Depends(get_db)):
+    contact = db.get(Contact, contact_id)
+    if not contact:
+        raise HTTPException(status_code=404, detail="联系人不存在")
+    db.delete(contact)
+    db.commit()

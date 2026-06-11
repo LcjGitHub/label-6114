@@ -15,3 +15,12 @@ class Exchange(Base):
     sent_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     received_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class Contact(Base):
+    __tablename__ = "contacts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    nickname: Mapped[str] = mapped_column(String(100), nullable=False)
+    contact_info: Mapped[str] = mapped_column(String(200), nullable=False)
+    notes: Mapped[str | None] = mapped_column(String(500), nullable=True)

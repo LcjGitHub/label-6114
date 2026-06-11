@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from models import Exchange
+from models import Contact, Exchange
 
 SEED_DATA = [
     {
@@ -48,4 +48,31 @@ def seed_exchanges(db: Session) -> None:
         return
     for item in SEED_DATA:
         db.add(Exchange(**item))
+    db.commit()
+
+
+CONTACT_SEED_DATA = [
+    {
+        "nickname": "小林",
+        "contact_info": "微信: xiaolin_reads",
+        "notes": "偏好文学类杂志，每月交换一次",
+    },
+    {
+        "nickname": "阿杰",
+        "contact_info": "邮箱: ajie@example.com",
+        "notes": "喜欢科幻和哲学类刊物",
+    },
+    {
+        "nickname": "书虫",
+        "contact_info": "微信: bookworm_99",
+        "notes": None,
+    },
+]
+
+
+def seed_contacts(db: Session) -> None:
+    if db.query(Contact).count() > 0:
+        return
+    for item in CONTACT_SEED_DATA:
+        db.add(Contact(**item))
     db.commit()

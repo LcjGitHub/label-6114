@@ -35,3 +35,25 @@ class StatisticsOut(BaseModel):
     in_progress_count: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ContactBase(BaseModel):
+    nickname: str
+    contact_info: str
+    notes: str | None = None
+
+
+class ContactCreate(ContactBase):
+    pass
+
+
+class ContactUpdate(BaseModel):
+    nickname: str | None = None
+    contact_info: str | None = None
+    notes: str | None = None
+
+
+class ContactOut(ContactBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)

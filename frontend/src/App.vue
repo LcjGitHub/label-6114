@@ -41,6 +41,14 @@ const route = useRoute()
               记录列表
             </n-button>
             <n-button type="primary" @click="router.push('/new')">新增记录</n-button>
+            <n-button
+              quaternary
+              :type="route.name === 'contacts' ? 'primary' : 'default'"
+              @click="router.push('/contacts')"
+            >
+              通讯录
+            </n-button>
+            <n-button type="primary" @click="router.push('/contacts/new')">新增联系人</n-button>
           </n-space>
         </n-space>
       </n-layout-header>
