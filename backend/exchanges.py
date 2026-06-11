@@ -1,15 +1,16 @@
 import csv
-from datetime import date
+from datetime import date, datetime
 from io import StringIO
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
+from sqlalchemy import Integer, func
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
 from database import get_db
 from models import Exchange
-from schemas import BatchDeleteIn, ExchangeCreate, ExchangeOut, ExchangeUpdate, ImportResultOut, PaginatedOut, StatisticsOut
+from schemas import BatchDeleteIn, ExchangeCreate, ExchangeOut, ExchangeUpdate, ImportResultOut, MonthlyStatsOut, MonthlyStatsItem, PaginatedOut, StatisticsOut
 
 router = APIRouter(prefix="/api", tags=["exchanges"])
 
@@ -145,6 +146,40 @@ def get_statistics(db: Session = Depends(get_db)):
         in_progress_count=in_progress_count,
         recent_in_progress=recent_in_progress,
     )
+
+
+@router.get("/statistics/monthly", response_model=MonthlyStatsOut)
+def get_monthly_statistics(db: Session = Depends(get_db)):
+    today = date.today()
+    months: list[str] = []
+    for i in range(11, -1, -1):
+        year = today.year - (1 if today.month - i <= 0 else 0)
+        month = (today.month - i - 1) % 12 + 1
+        months.append(f"{year}-{month:02d}")
+
+    results = (
+        db.query(
+            func.strftime("%Y-%m", Exchange.sent_date).label("month"),
+            func.count(Exchange.id).label("total_count"),
+            func.sum(func.cast(Exchange.is_completed, Integer)).label("completed_count"),
+        )
+        .filter(Exchange.sent_date.isnot(None))
+        .filter(func.strftime("%Y-%m", Exchange.sent_date).in_(months))
+        .group_by(func.strftime("%Y-%m", Exchange.sent_date))
+        .order_by(func.strftime("%Y-%m", Exchange.sent_date).asc())
+        .all()
+    )
+
+    stats_map: dict[str, tuple[int, int]] = {}
+    for row in results:
+        stats_map[row.month] = (row.total_count, row.completed_count or 0)
+
+    items: list[MonthlyStatsItem] = []
+    for month in months:
+        total, completed = stats_map.get(month, (0, 0))
+        items.append(MonthlyStatsItem(month=month, total_count=total, completed_count=completed))
+
+    return MonthlyStatsOut(items=items)
 
 
 REQUIRED_HEADERS = ["书名", "对方昵称", "寄出日期", "收到日期", "是否完成"]

@@ -35,6 +35,16 @@ export interface Statistics {
   recent_in_progress: RecentExchange[]
 }
 
+export interface MonthlyStatsItem {
+  month: string
+  total_count: number
+  completed_count: number
+}
+
+export interface MonthlyStats {
+  items: MonthlyStatsItem[]
+}
+
 export interface ImportResult {
   success_count: number
   failure_count: number

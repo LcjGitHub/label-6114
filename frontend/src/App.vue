@@ -24,6 +24,8 @@ const isContactActive = computed(() =>
 const isExchangeActive = computed(() =>
   ['list', 'create', 'edit', 'detail'].includes(route.name as string)
 )
+
+const isTrendActive = computed(() => route.name === 'trend')
 </script>
 
 <template>
@@ -41,6 +43,13 @@ const isExchangeActive = computed(() =>
               @click="router.push('/')"
             >
               数据概览
+            </n-button>
+            <n-button
+              quaternary
+              :type="isTrendActive ? 'primary' : 'default'"
+              @click="router.push('/trend')"
+            >
+              趋势分析
             </n-button>
             <n-button
               quaternary

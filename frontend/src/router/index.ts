@@ -6,11 +6,13 @@ import Overview from '@/views/Overview.vue'
 import ContactList from '@/views/ContactList.vue'
 import ContactForm from '@/views/ContactForm.vue'
 import ContactDetail from '@/views/ContactDetail.vue'
+import TrendAnalysis from '@/views/TrendAnalysis.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'overview', component: Overview },
+    { path: '/trend', name: 'trend', component: TrendAnalysis },
     { path: '/list', name: 'list', component: ExchangeList },
     { path: '/new', name: 'create', component: ExchangeForm },
     { path: '/edit/:id', name: 'edit', component: ExchangeForm, props: true },

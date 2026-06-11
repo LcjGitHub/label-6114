@@ -60,6 +60,16 @@ class StatisticsOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MonthlyStatsItem(BaseModel):
+    month: str
+    total_count: int
+    completed_count: int
+
+
+class MonthlyStatsOut(BaseModel):
+    items: list[MonthlyStatsItem]
+
+
 class ContactBase(BaseModel):
     nickname: str
     contact_info: str

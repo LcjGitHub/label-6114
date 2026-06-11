@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Exchange, ExchangeFormData, ImportResult, PaginatedResult, Statistics } from '@/types/exchange'
+import type { Exchange, ExchangeFormData, ImportResult, MonthlyStats, PaginatedResult, Statistics } from '@/types/exchange'
 
 const api = axios.create({
   baseURL: '/api',
@@ -46,6 +46,11 @@ export async function batchDeleteExchanges(ids: number[]): Promise<void> {
 
 export async function fetchStatistics(): Promise<Statistics> {
   const { data } = await api.get<Statistics>('/statistics')
+  return data
+}
+
+export async function fetchMonthlyStatistics(): Promise<MonthlyStats> {
+  const { data } = await api.get<MonthlyStats>('/statistics/monthly')
   return data
 }
 
