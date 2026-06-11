@@ -12,7 +12,7 @@ import {
   useMessage,
   type DataTableColumns,
 } from 'naive-ui'
-import { deleteContact, fetchContacts } from '@/api/contact'
+import { deleteContact, exportContacts, fetchContacts } from '@/api/contact'
 import type { Contact } from '@/types/contact'
 
 const router = useRouter()
@@ -23,6 +23,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const isFetching = ref(false)
+const isExporting = ref(false)
 const contacts = ref<Contact[]>([])
 const keyword = ref('')
 
@@ -50,6 +51,24 @@ async function loadContacts() {
 function handleSearch() {
   currentPage.value = 1
   loadContacts()
+}
+
+async function handleExport() {
+  isExporting.value = true
+  try {
+    const blob = await exportContacts()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'contacts.csv'
+    a.click()
+    window.URL.revokeObjectURL(url)
+    message.success('导出成功')
+  } catch {
+    message.error('导出失败')
+  } finally {
+    isExporting.value = false
+  }
 }
 
 loadContacts()
@@ -119,13 +138,18 @@ function handleDelete(row: Contact) {
 
 <template>
   <n-space vertical :size="16" style="width: 100%">
-    <n-input
-      v-model:value="keyword"
-      placeholder="输入关键词搜索昵称或联系方式"
-      clearable
-      @update:value="handleSearch"
-      @keyup.enter="handleSearch"
-    />
+    <n-space justify="space-between" align="center">
+      <n-input
+        v-model:value="keyword"
+        placeholder="输入关键词搜索昵称或联系方式"
+        clearable
+        @update:value="handleSearch"
+        @keyup.enter="handleSearch"
+      />
+      <n-button type="primary" :loading="isExporting" @click="handleExport">
+        导出CSV
+      </n-button>
+    </n-space>
     <n-data-table
       :columns="columns"
       :data="contacts"

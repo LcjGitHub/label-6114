@@ -37,3 +37,8 @@ export async function updateContact(
 export async function deleteContact(id: number): Promise<void> {
   await api.delete(`/contacts/${id}`)
 }
+
+export async function exportContacts(): Promise<Blob> {
+  const { data } = await api.get('/contacts/export', { responseType: 'blob' })
+  return data
+}
