@@ -46,6 +46,10 @@ async function loadExchanges() {
       page: currentPage.value,
       page_size: pageSize.value,
     })
+    if (!result.items) {
+      message.error('加载列表异常')
+      return
+    }
     exchanges.value = result.items
     total.value = result.total
   } catch {
@@ -177,6 +181,9 @@ function handleDelete(row: Exchange) {
       try {
         await deleteExchange(row.id)
         message.success('已删除')
+        if (exchanges.value.length === 1 && currentPage.value > 1) {
+          currentPage.value -= 1
+        }
         await loadExchanges()
       } catch {
         message.error('删除失败')

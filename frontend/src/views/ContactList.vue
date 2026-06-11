@@ -31,6 +31,10 @@ async function loadContacts() {
       page: currentPage.value,
       page_size: pageSize.value,
     })
+    if (!result.items) {
+      message.error('加载联系人列表异常')
+      return
+    }
     contacts.value = result.items
     total.value = result.total
   } catch {
@@ -93,6 +97,9 @@ function handleDelete(row: Contact) {
       try {
         await deleteContact(row.id)
         message.success('已删除')
+        if (contacts.value.length === 1 && currentPage.value > 1) {
+          currentPage.value -= 1
+        }
         await loadContacts()
       } catch {
         message.error('删除失败')
