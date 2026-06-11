@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useBreakpoints } from '@vueuse/core'
-import { NCard, NGrid, NGridItem, NStatistic, NSpace, NSpin, useMessage } from 'naive-ui'
+import { NCard, NGrid, NGridItem, NStatistic, NSpace, NSpin, NDataTable, useMessage } from 'naive-ui'
+import { useRouter } from 'vue-router'
 import { fetchStatistics } from '@/api/exchange'
-import type { Statistics } from '@/types/exchange'
+import type { Statistics, RecentExchange } from '@/types/exchange'
 
 const breakpoints = useBreakpoints({
   xs: 0,
@@ -12,6 +13,7 @@ const breakpoints = useBreakpoints({
 })
 
 const message = useMessage()
+const router = useRouter()
 
 const statistics = ref<Statistics | null>(null)
 const loading = ref(true)
@@ -30,6 +32,18 @@ const completedPercent = computed(() => {
   if (totalCount.value === 0) return 0
   return Math.round((completedCount.value / totalCount.value) * 100)
 })
+
+const recentInProgress = computed<RecentExchange[]>(() => statistics.value?.recent_in_progress ?? [])
+
+const recentColumns = [
+  { title: '编号', key: 'id', width: 70 },
+  { title: '书名', key: 'book_title' },
+  { title: '对方昵称', key: 'counterpart_nickname' },
+]
+
+function handleRowClick(row: RecentExchange) {
+  router.push({ name: 'detail', params: { id: row.id } })
+}
 
 onMounted(async () => {
   try {
@@ -84,6 +98,15 @@ onMounted(async () => {
           </n-card>
         </n-grid-item>
       </n-grid>
+      <n-card title="最近进行中记录" style="margin-top: 16px" v-if="recentInProgress.length > 0">
+        <n-data-table
+          :columns="recentColumns"
+          :data="recentInProgress"
+          :bordered="false"
+          size="small"
+          :row-props="(row: RecentExchange) => ({ style: 'cursor: pointer;', onClick: () => handleRowClick(row) })"
+        />
+      </n-card>
     </n-spin>
   </n-space>
 </template>

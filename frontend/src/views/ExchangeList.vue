@@ -31,7 +31,7 @@ const exporting = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-const statistics = ref<Statistics>({ total_count: 0, completed_count: 0, in_progress_count: 0 })
+const statistics = ref<Statistics>({ total_count: 0, completed_count: 0, in_progress_count: 0, recent_in_progress: [] })
 const checkedRowKeys = ref<number[]>([])
 const sentDateOrder = ref<'asc' | 'desc' | ''>('')
 

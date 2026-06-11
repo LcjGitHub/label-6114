@@ -43,10 +43,19 @@ class ExchangeOut(ExchangeBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class RecentExchangeOut(BaseModel):
+    id: int
+    book_title: str
+    counterpart_nickname: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class StatisticsOut(BaseModel):
     total_count: int
     completed_count: int
     in_progress_count: int
+    recent_in_progress: list[RecentExchangeOut] = []
 
     model_config = ConfigDict(from_attributes=True)
 

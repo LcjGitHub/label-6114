@@ -131,8 +131,16 @@ def get_statistics(db: Session = Depends(get_db)):
     total_count = db.query(Exchange).count()
     completed_count = db.query(Exchange).filter(Exchange.is_completed == True).count()
     in_progress_count = total_count - completed_count
+    recent_in_progress = (
+        db.query(Exchange)
+        .filter(Exchange.is_completed == False)
+        .order_by(Exchange.id.desc())
+        .limit(5)
+        .all()
+    )
     return StatisticsOut(
         total_count=total_count,
         completed_count=completed_count,
         in_progress_count=in_progress_count,
+        recent_in_progress=recent_in_progress,
     )

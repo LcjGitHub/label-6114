@@ -22,8 +22,15 @@ export interface ExchangeFormData {
   notes: string | null
 }
 
+export interface RecentExchange {
+  id: number
+  book_title: string
+  counterpart_nickname: string
+}
+
 export interface Statistics {
   total_count: number
   completed_count: number
   in_progress_count: number
+  recent_in_progress: RecentExchange[]
 }
