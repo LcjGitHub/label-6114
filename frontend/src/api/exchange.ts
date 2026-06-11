@@ -8,6 +8,7 @@ const api = axios.create({
 export interface ExchangeQueryParams {
   keyword?: string
   status?: 'completed' | 'in_progress' | ''
+  sent_date_order?: 'asc' | 'desc' | ''
   page?: number
   page_size?: number
 }

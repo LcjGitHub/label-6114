@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref, onMounted, watch, onActivated } from 'vue'
+import { h, ref, computed, onMounted, watch, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { format, parseISO } from 'date-fns'
 import {
@@ -33,6 +33,7 @@ const pageSize = ref(10)
 const total = ref(0)
 const statistics = ref<Statistics>({ total_count: 0, completed_count: 0, in_progress_count: 0 })
 const checkedRowKeys = ref<number[]>([])
+const sentDateOrder = ref<'asc' | 'desc' | ''>('')
 
 const statusOptions: SelectOption[] = [
   { label: '全部状态', value: '' },
@@ -46,6 +47,7 @@ async function loadExchanges() {
     const result = await fetchExchanges({
       keyword: keyword.value || undefined,
       status: status.value || undefined,
+      sent_date_order: sentDateOrder.value || undefined,
       page: currentPage.value,
       page_size: pageSize.value,
     })
@@ -111,7 +113,21 @@ function formatDate(value: string | null) {
   return format(parseISO(value), 'yyyy-MM-dd')
 }
 
-const columns: DataTableColumns<Exchange> = [
+function handleSorterChange(sorter: { columnKey: string | number | undefined; sorter: boolean | 'default' | { multiple: number }; order: 'ascend' | 'descend' | false } | null) {
+  if (!sorter || sorter.columnKey !== 'sent_date') {
+    sentDateOrder.value = ''
+  } else if (sorter.order === 'ascend') {
+    sentDateOrder.value = 'asc'
+  } else if (sorter.order === 'descend') {
+    sentDateOrder.value = 'desc'
+  } else {
+    sentDateOrder.value = ''
+  }
+  currentPage.value = 1
+  loadExchanges()
+}
+
+const columns = computed<DataTableColumns<Exchange>>(() => [
   {
     type: 'selection',
     options: ['all', 'none'],
@@ -121,6 +137,8 @@ const columns: DataTableColumns<Exchange> = [
   {
     title: '寄出日期',
     key: 'sent_date',
+    sorter: true,
+    sortOrder: sentDateOrder.value === 'asc' ? 'ascend' : sentDateOrder.value === 'desc' ? 'descend' : false,
     render: (row) => formatDate(row.sent_date),
   },
   {
@@ -169,7 +187,7 @@ const columns: DataTableColumns<Exchange> = [
         ],
       }),
   },
-]
+])
 
 async function handleExport() {
   if (exporting.value) return
@@ -287,8 +305,10 @@ function handleBatchDelete() {
       :loading="isFetching"
       :bordered="false"
       striped
+      remote
       :row-key="(row: Exchange) => row.id"
       v-model:checked-row-keys="checkedRowKeys"
+      @update:sorter="handleSorterChange"
     />
     <n-pagination
       :page="currentPage"
