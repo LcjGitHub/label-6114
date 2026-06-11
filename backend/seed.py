@@ -49,11 +49,22 @@ SEED_DATA = [
 
 
 def seed_exchanges(db: Session) -> None:
-    if db.query(Exchange).count() > 0:
+    if db.query(Exchange).count() == 0:
+        for item in SEED_DATA:
+            db.add(Exchange(**item))
+        db.commit()
         return
-    for item in SEED_DATA:
-        db.add(Exchange(**item))
-    db.commit()
+    notes_map = {item["book_title"]: item["notes"] for item in SEED_DATA}
+    has_notes_column = hasattr(Exchange, "notes")
+    if not has_notes_column:
+        return
+    updated = False
+    for exchange in db.query(Exchange).all():
+        if exchange.notes is None and exchange.book_title in notes_map:
+            exchange.notes = notes_map[exchange.book_title]
+            updated = True
+    if updated:
+        db.commit()
 
 
 CONTACT_SEED_DATA = [

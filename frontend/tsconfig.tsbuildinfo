@@ -1,1 +1,0 @@
-{"root":["./src/main.ts","./src/vite-env.d.ts","./src/api/contact.ts","./src/api/exchange.ts","./src/router/index.ts","./src/types/contact.ts","./src/types/exchange.ts","./src/app.vue","./src/views/contactform.vue","./src/views/contactlist.vue","./src/views/exchangeform.vue","./src/views/exchangelist.vue","./src/views/overview.vue"],"version":"5.6.3"}
