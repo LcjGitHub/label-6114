@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import {
   NButton,
   NDataTable,
+  NInput,
   NPagination,
   NSpace,
   NTag,
@@ -23,6 +24,7 @@ const pageSize = ref(10)
 const total = ref(0)
 const isFetching = ref(false)
 const contacts = ref<Contact[]>([])
+const keyword = ref('')
 
 async function loadContacts() {
   isFetching.value = true
@@ -30,6 +32,7 @@ async function loadContacts() {
     const result = await fetchContacts({
       page: currentPage.value,
       page_size: pageSize.value,
+      keyword: keyword.value || undefined,
     })
     if (!result.items) {
       message.error('加载联系人列表异常')
@@ -42,6 +45,11 @@ async function loadContacts() {
   } finally {
     isFetching.value = false
   }
+}
+
+function handleSearch() {
+  currentPage.value = 1
+  loadContacts()
 }
 
 loadContacts()
@@ -111,6 +119,13 @@ function handleDelete(row: Contact) {
 
 <template>
   <n-space vertical :size="16" style="width: 100%">
+    <n-input
+      v-model:value="keyword"
+      placeholder="输入关键词搜索昵称或联系方式"
+      clearable
+      @update:value="handleSearch"
+      @keyup.enter="handleSearch"
+    />
     <n-data-table
       :columns="columns"
       :data="contacts"

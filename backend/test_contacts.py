@@ -83,3 +83,37 @@ def test_pagination_contacts(client):
 
     response2 = client.get("/api/contacts?page=2&page_size=10")
     assert response2.status_code == 200
+
+
+def test_search_contacts(client):
+    client.post("/api/contacts", json={
+        "nickname": "张三",
+        "contact_info": "zhangsan@example.com",
+    })
+    client.post("/api/contacts", json={
+        "nickname": "李四",
+        "contact_info": "lisi@example.com",
+    })
+    client.post("/api/contacts", json={
+        "nickname": "王五",
+        "contact_info": "wangwu@test.com",
+    })
+
+    response = client.get("/api/contacts?keyword=张")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] >= 1
+    assert any(item["nickname"] == "张三" for item in data["items"])
+
+    response2 = client.get("/api/contacts?keyword=example.com")
+    assert response2.status_code == 200
+    data2 = response2.json()
+    assert data2["total"] >= 2
+    nicknames = [item["nickname"] for item in data2["items"]]
+    assert "张三" in nicknames
+    assert "李四" in nicknames
+
+    response3 = client.get("/api/contacts?keyword=不存在")
+    assert response3.status_code == 200
+    data3 = response3.json()
+    assert data3["total"] == 0

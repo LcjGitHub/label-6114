@@ -8,6 +8,7 @@ const api = axios.create({
 export interface ContactQueryParams {
   page?: number
   page_size?: number
+  keyword?: string
 }
 
 export async function fetchContacts(params?: ContactQueryParams): Promise<PaginatedResult<Contact>> {
