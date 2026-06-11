@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, computed } from 'vue'
+import { h, computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFetch } from '@vueuse/core'
 import { format, parseISO } from 'date-fns'
@@ -12,7 +12,7 @@ import {
   useMessage,
   type DataTableColumns,
 } from 'naive-ui'
-import { deleteExchange } from '@/api/exchange'
+import { deleteExchange, exportExchanges } from '@/api/exchange'
 import type { Exchange } from '@/types/exchange'
 
 const router = useRouter()
@@ -82,6 +82,29 @@ const columns: DataTableColumns<Exchange> = [
   },
 ]
 
+const exporting = ref(false)
+
+async function handleExport() {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+    const blob = await exportExchanges()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'exchange_records.csv'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    message.success('导出成功')
+  } catch {
+    message.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
 function handleDelete(row: Exchange) {
   dialog.warning({
     title: '确认删除',
@@ -102,11 +125,18 @@ function handleDelete(row: Exchange) {
 </script>
 
 <template>
-  <n-data-table
-    :columns="columns"
-    :data="exchanges"
-    :loading="isFetching"
-    :bordered="false"
-    striped
-  />
+  <n-space vertical :size="16" style="width: 100%">
+    <n-space justify="end">
+      <n-button type="primary" :loading="exporting" @click="handleExport">
+        导出 CSV
+      </n-button>
+    </n-space>
+    <n-data-table
+      :columns="columns"
+      :data="exchanges"
+      :loading="isFetching"
+      :bordered="false"
+      striped
+    />
+  </n-space>
 </template>

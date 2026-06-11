@@ -36,3 +36,10 @@ export async function fetchStatistics(): Promise<Statistics> {
   const { data } = await api.get<Statistics>('/statistics')
   return data
 }
+
+export async function exportExchanges(): Promise<Blob> {
+  const { data } = await api.get('/exchanges/export', {
+    responseType: 'blob',
+  })
+  return data
+}

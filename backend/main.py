@@ -1,5 +1,9 @@
+import csv
+from io import StringIO
+
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
@@ -84,6 +88,39 @@ def delete_exchange(exchange_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="记录不存在")
     db.delete(exchange)
     db.commit()
+
+
+def generate_csv(db: Session):
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["书名", "对方昵称", "寄出日期", "收到日期", "是否完成"])
+    yield output.getvalue()
+    output.seek(0)
+    output.truncate(0)
+
+    exchanges = db.query(Exchange).order_by(Exchange.id.desc()).all()
+    for exchange in exchanges:
+        writer.writerow([
+            exchange.book_title,
+            exchange.counterpart_nickname,
+            exchange.sent_date.isoformat() if exchange.sent_date else "",
+            exchange.received_date.isoformat() if exchange.received_date else "",
+            "是" if exchange.is_completed else "否",
+        ])
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
+
+
+@app.get("/api/exchanges/export")
+def export_exchanges(db: Session = Depends(get_db)):
+    return StreamingResponse(
+        generate_csv(db),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": "attachment; filename=exchange_records.csv",
+        },
+    )
 
 
 @app.get("/api/statistics", response_model=StatisticsOut)
