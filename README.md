@@ -162,3 +162,20 @@ npx vue-tsc --noEmit
 ```bash
 npm run build
 ```
+
+### 后端：运行交换记录列表接口专项集成测试
+
+`backend/tests/` 目录下提供了交换记录列表接口（`GET /api/exchanges`）的专项集成测试，使用独立临时 SQLite 数据库，每个测试前后自动建表与清理数据。
+
+```bash
+cd backend
+
+# 运行 tests 目录下的全部专项集成测试
+python -m pytest tests/ -v
+
+# 仅运行交换记录列表接口测试文件
+python -m pytest tests/test_exchange_list.py -v
+
+# 运行全部后端测试（根目录下的原有测试 + tests 目录下的专项测试）
+python -m pytest -v
+```
