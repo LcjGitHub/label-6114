@@ -34,3 +34,9 @@ export interface Statistics {
   in_progress_count: number
   recent_in_progress: RecentExchange[]
 }
+
+export interface ImportResult {
+  success_count: number
+  failure_count: number
+  errors: string[]
+}

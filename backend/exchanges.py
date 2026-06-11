@@ -1,14 +1,15 @@
 import csv
+from datetime import date
 from io import StringIO
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
 from database import get_db
 from models import Exchange
-from schemas import BatchDeleteIn, ExchangeCreate, ExchangeOut, ExchangeUpdate, PaginatedOut, StatisticsOut
+from schemas import BatchDeleteIn, ExchangeCreate, ExchangeOut, ExchangeUpdate, ImportResultOut, PaginatedOut, StatisticsOut
 
 router = APIRouter(prefix="/api", tags=["exchanges"])
 
@@ -143,4 +144,92 @@ def get_statistics(db: Session = Depends(get_db)):
         completed_count=completed_count,
         in_progress_count=in_progress_count,
         recent_in_progress=recent_in_progress,
+    )
+
+
+REQUIRED_HEADERS = ["书名", "对方昵称", "寄出日期", "收到日期", "是否完成"]
+
+
+def parse_date(date_str: str) -> date | None:
+    if not date_str or date_str.strip() == "":
+        return None
+    date_str = date_str.strip()
+    for fmt in ["%Y-%m-%d", "%Y/%m/%d", "%Y.%m.%d"]:
+        try:
+            return date.fromisoformat(date_str) if fmt == "%Y-%m-%d" else date.strptime(date_str, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"日期格式不正确: {date_str}")
+
+
+def parse_is_completed(value: str) -> bool:
+    if not value:
+        return False
+    value = value.strip()
+    if value in ["是", "true", "True", "TRUE", "1", "yes", "Yes"]:
+        return True
+    if value in ["否", "false", "False", "FALSE", "0", "no", "No", ""]:
+        return False
+    raise ValueError(f"是否完成格式不正确: {value}")
+
+
+@router.post("/exchanges/import", response_model=ImportResultOut)
+def import_exchanges(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="请上传 CSV 文件")
+
+    content = file.file.read().decode("utf-8-sig")
+    reader = csv.DictReader(StringIO(content))
+
+    if not reader.fieldnames:
+        raise HTTPException(status_code=400, detail="CSV 文件为空或格式不正确")
+
+    headers = [h.strip() for h in reader.fieldnames]
+    missing_headers = [h for h in REQUIRED_HEADERS if h not in headers]
+    if missing_headers:
+        raise HTTPException(
+            status_code=400,
+            detail=f"CSV 表头缺少必要字段: {', '.join(missing_headers)}",
+        )
+
+    success_count = 0
+    failure_count = 0
+    errors: list[str] = []
+
+    for row_num, row in enumerate(reader, start=2):
+        try:
+            book_title = row.get("书名", "").strip()
+            counterpart_nickname = row.get("对方昵称", "").strip()
+
+            if not book_title:
+                raise ValueError("书名为空")
+            if not counterpart_nickname:
+                raise ValueError("对方昵称为空")
+
+            sent_date = parse_date(row.get("寄出日期", ""))
+            received_date = parse_date(row.get("收到日期", ""))
+            is_completed = parse_is_completed(row.get("是否完成", ""))
+
+            exchange = Exchange(
+                book_title=book_title,
+                counterpart_nickname=counterpart_nickname,
+                sent_date=sent_date,
+                received_date=received_date,
+                is_completed=is_completed,
+            )
+            db.add(exchange)
+            success_count += 1
+        except ValueError as e:
+            failure_count += 1
+            errors.append(f"第 {row_num} 行: {str(e)}")
+        except Exception as e:
+            failure_count += 1
+            errors.append(f"第 {row_num} 行: 未知错误 - {str(e)}")
+
+    db.commit()
+
+    return ImportResultOut(
+        success_count=success_count,
+        failure_count=failure_count,
+        errors=errors,
     )

@@ -84,3 +84,9 @@ class ContactOut(ContactBase):
 
 class BatchDeleteIn(BaseModel):
     ids: list[int]
+
+
+class ImportResultOut(BaseModel):
+    success_count: int
+    failure_count: int
+    errors: list[str] = []

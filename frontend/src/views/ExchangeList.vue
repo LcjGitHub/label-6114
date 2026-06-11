@@ -15,7 +15,7 @@ import {
   type DataTableColumns,
   type SelectOption,
 } from 'naive-ui'
-import { batchDeleteExchanges, deleteExchange, exportExchanges, fetchExchanges, fetchStatistics } from '@/api/exchange'
+import { batchDeleteExchanges, deleteExchange, exportExchanges, fetchExchanges, fetchStatistics, importExchanges } from '@/api/exchange'
 import type { Exchange } from '@/types/exchange'
 import type { Statistics } from '@/types/exchange'
 
@@ -28,6 +28,8 @@ const status = ref<'completed' | 'in_progress' | ''>('')
 const exchanges = ref<Exchange[]>([])
 const isFetching = ref(false)
 const exporting = ref(false)
+const importing = ref(false)
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -210,6 +212,43 @@ async function handleExport() {
   }
 }
 
+function handleImportClick() {
+  if (importing.value) return
+  fileInputRef.value?.click()
+}
+
+async function handleFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  importing.value = true
+  try {
+    const result = await importExchanges(file)
+    if (result.failure_count === 0) {
+      message.success(`导入成功，共导入 ${result.success_count} 条记录`)
+    } else if (result.success_count === 0) {
+      message.error(`导入失败，共 ${result.failure_count} 条记录失败`)
+    } else {
+      message.warning(`导入完成，成功 ${result.success_count} 条，失败 ${result.failure_count} 条`)
+    }
+    if (result.errors.length > 0) {
+      console.warn('导入错误详情:', result.errors)
+    }
+    currentPage.value = 1
+    await loadExchanges()
+    loadStatistics()
+  } catch (err: any) {
+    const errorMsg = err?.response?.data?.detail || '导入失败'
+    message.error(errorMsg)
+  } finally {
+    importing.value = false
+    if (fileInputRef.value) {
+      fileInputRef.value.value = ''
+    }
+  }
+}
+
 function handleDelete(row: Exchange) {
   dialog.warning({
     title: '确认删除',
@@ -284,9 +323,14 @@ function handleBatchDelete() {
           批量删除 ({{ checkedRowKeys.length }})
         </n-button>
       </n-space>
-      <n-button type="primary" :loading="exporting" @click="handleExport">
-        导出记录
-      </n-button>
+      <n-space>
+        <n-button :loading="importing" @click="handleImportClick">
+          导入记录
+        </n-button>
+        <n-button type="primary" :loading="exporting" @click="handleExport">
+          导出记录
+        </n-button>
+      </n-space>
     </n-space>
     <n-space :size="24" align="center">
       <n-tag :bordered="false" type="info" size="medium">
@@ -318,6 +362,13 @@ function handleBatchDelete() {
       show-size-picker
       @update:page="handlePageChange"
       @update:page-size="handlePageSizeChange"
+    />
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept=".csv"
+      style="display: none"
+      @change="handleFileChange"
     />
   </n-space>
 </template>

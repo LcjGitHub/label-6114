@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Exchange, ExchangeFormData, PaginatedResult, Statistics } from '@/types/exchange'
+import type { Exchange, ExchangeFormData, ImportResult, PaginatedResult, Statistics } from '@/types/exchange'
 
 const api = axios.create({
   baseURL: '/api',
@@ -52,6 +52,17 @@ export async function fetchStatistics(): Promise<Statistics> {
 export async function exportExchanges(): Promise<Blob> {
   const { data } = await api.get('/exchanges/export', {
     responseType: 'blob',
+  })
+  return data
+}
+
+export async function importExchanges(file: File): Promise<ImportResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post<ImportResult>('/exchanges/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
   })
   return data
 }
