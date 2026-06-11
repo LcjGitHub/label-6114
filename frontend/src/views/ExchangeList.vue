@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref, onMounted } from 'vue'
+import { h, ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { format, parseISO } from 'date-fns'
 import {
@@ -47,13 +47,18 @@ async function loadExchanges() {
   }
 }
 
-function handleSearch() {
-  loadExchanges()
-}
-
 function handleStatusChange() {
   loadExchanges()
 }
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(keyword, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    loadExchanges()
+  }, 300)
+})
 
 onMounted(() => {
   loadExchanges()
@@ -169,8 +174,6 @@ function handleDelete(row: Exchange) {
           placeholder="搜索书名或对方昵称"
           clearable
           style="width: 280px"
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
         />
         <n-select
           v-model:value="status"
