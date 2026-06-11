@@ -6,17 +6,23 @@ import {
   NButton,
   NCard,
   NDatePicker,
+  NEmpty,
   NForm,
   NFormItem,
   NInput,
+  NModal,
+  NPagination,
   NSpace,
+  NSpin,
   NSwitch,
   useMessage,
   type FormInst,
   type FormRules,
 } from 'naive-ui'
 import { createExchange, fetchExchange, updateExchange } from '@/api/exchange'
+import { fetchContacts } from '@/api/contact'
 import type { ExchangeFormData } from '@/types/exchange'
+import type { Contact } from '@/types/contact'
 
 const props = defineProps<{
   id?: string
@@ -121,6 +127,59 @@ async function handleSubmit() {
   }
 }
 
+const contactPickerVisible = ref(false)
+const contactList = ref<Contact[]>([])
+const contactTotal = ref(0)
+const contactPage = ref(1)
+const contactPageSize = ref(10)
+const contactKeyword = ref('')
+const contactLoading = ref(false)
+
+async function loadContactPicker() {
+  contactLoading.value = true
+  try {
+    const result = await fetchContacts({
+      page: contactPage.value,
+      page_size: contactPageSize.value,
+      keyword: contactKeyword.value || undefined,
+    })
+    contactList.value = result.items ?? []
+    contactTotal.value = result.total
+  } catch {
+    message.error('加载通讯录失败')
+  } finally {
+    contactLoading.value = false
+  }
+}
+
+function openContactPicker() {
+  contactPage.value = 1
+  contactKeyword.value = ''
+  contactPickerVisible.value = true
+  loadContactPicker()
+}
+
+function handleContactSearch() {
+  contactPage.value = 1
+  loadContactPicker()
+}
+
+function handleContactPageChange(page: number) {
+  contactPage.value = page
+  loadContactPicker()
+}
+
+function handleContactPageSizeChange(size: number) {
+  contactPageSize.value = size
+  contactPage.value = 1
+  loadContactPicker()
+}
+
+function selectContact(contact: Contact) {
+  form.value.counterpart_nickname = contact.nickname
+  contactPickerVisible.value = false
+}
+
 onMounted(loadExchange)
 </script>
 
@@ -132,6 +191,9 @@ onMounted(loadExchange)
       </n-form-item>
       <n-form-item label="对方昵称" path="counterpart_nickname">
         <n-input v-model:value="form.counterpart_nickname" placeholder="请输入对方昵称" />
+        <n-button type="primary" ghost style="margin-left: 8px; flex-shrink: 0" @click="openContactPicker">
+          选择
+        </n-button>
       </n-form-item>
       <n-form-item label="寄出日期" path="sent_date">
         <n-date-picker v-model:value="sentTimestamp" type="date" clearable style="width: 100%" />
@@ -168,4 +230,84 @@ onMounted(loadExchange)
       </n-form-item>
     </n-form>
   </n-card>
+
+  <n-modal
+    v-model:show="contactPickerVisible"
+    preset="card"
+    title="从通讯录选择"
+    style="width: 480px"
+    :mask-closable="true"
+  >
+    <n-space vertical :size="12">
+      <n-input
+        v-model:value="contactKeyword"
+        placeholder="搜索昵称或联系方式"
+        clearable
+        @keyup.enter="handleContactSearch"
+        @clear="handleContactSearch"
+      />
+      <n-spin :show="contactLoading">
+        <div v-if="contactList.length === 0" style="min-height: 120px; display: flex; align-items: center; justify-content: center">
+          <n-empty description="暂无联系人" />
+        </div>
+        <div v-else class="contact-picker-list">
+          <div
+            v-for="contact in contactList"
+            :key="contact.id"
+            class="contact-picker-item"
+            @click="selectContact(contact)"
+          >
+            <span class="contact-picker-nickname">{{ contact.nickname }}</span>
+            <span class="contact-picker-info">{{ contact.contact_info }}</span>
+          </div>
+        </div>
+      </n-spin>
+      <n-pagination
+        v-if="contactTotal > 0"
+        :page="contactPage"
+        :page-size="contactPageSize"
+        :item-count="contactTotal"
+        :page-sizes="[10, 20, 50]"
+        show-size-picker
+        size="small"
+        @update:page="handleContactPageChange"
+        @update:page-size="handleContactPageSizeChange"
+      />
+    </n-space>
+  </n-modal>
 </template>
+
+<style scoped>
+.contact-picker-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.contact-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contact-picker-item:hover {
+  background-color: rgba(24, 160, 88, 0.08);
+}
+
+.contact-picker-nickname {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.contact-picker-info {
+  font-size: 13px;
+  color: var(--n-text-color-3);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
