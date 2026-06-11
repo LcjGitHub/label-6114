@@ -14,3 +14,9 @@ export interface ExchangeFormData {
   received_date: string | null
   is_completed: boolean
 }
+
+export interface Statistics {
+  total_count: number
+  completed_count: number
+  in_progress_count: number
+}

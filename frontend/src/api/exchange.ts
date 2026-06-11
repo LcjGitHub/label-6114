@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Exchange, ExchangeFormData } from '@/types/exchange'
+import type { Exchange, ExchangeFormData, Statistics } from '@/types/exchange'
 
 const api = axios.create({
   baseURL: '/api',
@@ -30,4 +30,9 @@ export async function updateExchange(
 
 export async function deleteExchange(id: number): Promise<void> {
   await api.delete(`/exchanges/${id}`)
+}
+
+export async function fetchStatistics(): Promise<Statistics> {
+  const { data } = await api.get<Statistics>('/statistics')
+  return data
 }

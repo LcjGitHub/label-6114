@@ -27,3 +27,11 @@ class ExchangeOut(ExchangeBase):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class StatisticsOut(BaseModel):
+    total_count: int
+    completed_count: int
+    in_progress_count: int
+
+    model_config = ConfigDict(from_attributes=True)

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from database import Base, SessionLocal, engine, get_db
 from models import Exchange
-from schemas import ExchangeCreate, ExchangeOut, ExchangeUpdate
+from schemas import ExchangeCreate, ExchangeOut, ExchangeUpdate, StatisticsOut
 from seed import seed_exchanges
 
 Base.metadata.create_all(bind=engine)
@@ -72,3 +72,15 @@ def delete_exchange(exchange_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="记录不存在")
     db.delete(exchange)
     db.commit()
+
+
+@app.get("/api/statistics", response_model=StatisticsOut)
+def get_statistics(db: Session = Depends(get_db)):
+    total_count = db.query(Exchange).count()
+    completed_count = db.query(Exchange).filter(Exchange.is_completed == True).count()
+    in_progress_count = total_count - completed_count
+    return StatisticsOut(
+        total_count=total_count,
+        completed_count=completed_count,
+        in_progress_count=in_progress_count,
+    )

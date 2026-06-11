@@ -28,8 +28,15 @@ const route = useRoute()
           <n-space>
             <n-button
               quaternary
-              :type="route.name === 'list' ? 'primary' : 'default'"
+              :type="route.name === 'overview' ? 'primary' : 'default'"
               @click="router.push('/')"
+            >
+              数据概览
+            </n-button>
+            <n-button
+              quaternary
+              :type="route.name === 'list' ? 'primary' : 'default'"
+              @click="router.push('/list')"
             >
               记录列表
             </n-button>
