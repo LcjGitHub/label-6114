@@ -88,3 +88,77 @@ npm run dev
 ## 依赖说明
 
 所有依赖均在项目目录内安装（Python venv + 前端 `node_modules`），无需全局 pnpm/yarn。
+
+## 持续集成（CI）
+
+本项目通过 GitHub Actions 实现自动化持续集成，工作流配置位于 [.github/workflows/ci.yml](.github/workflows/ci.yml)。
+
+### 触发条件
+
+- **推送触发**：向 `main` 或 `master` 分支推送代码时自动执行
+- **PR 触发**：向 `main` 或 `master` 分支提交 Pull Request 时自动执行
+
+### CI 工作流说明
+
+CI 包含两个并行任务：`backend`（后端）和 `frontend`（前端），均在 Ubuntu 最新版环境下运行。
+
+#### 后端任务（Backend - Install Dependencies & Test）
+
+| 步骤 | 说明 |
+|------|------|
+| Checkout code | 检出仓库代码（使用 `actions/checkout@v4`） |
+| Set up Python | 配置 Python 3.11 环境，启用 pip 缓存（使用 `actions/setup-python@v5`） |
+| Install dependencies | 升级 pip 并安装 `backend/requirements.txt` 中的全部依赖 |
+| Run pytest | 在 `backend/` 目录下执行 `pytest -v` 运行全部测试用例 |
+
+#### 前端任务（Frontend - Install Dependencies & Type Check）
+
+| 步骤 | 说明 |
+|------|------|
+| Checkout code | 检出仓库代码（使用 `actions/checkout@v4`） |
+| Set up Node.js | 配置 Node.js 20 环境，启用 npm 缓存（使用 `actions/setup-node@v4`） |
+| Install dependencies | 执行 `npm ci` 按照 `package-lock.json` 锁定版本安装依赖 |
+| Run TypeScript type check | 执行 `npx vue-tsc --noEmit` 进行 TypeScript 类型检查，不输出编译产物 |
+
+### 本地复现 CI 检查
+
+在提交代码前，可在本地手动执行以下命令复现 CI 检查，确保所有检查通过后再推送。
+
+#### 后端：安装依赖并运行 pytest
+
+```bash
+cd backend
+
+# 1. 创建并激活虚拟环境（如尚未创建）
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # macOS / Linux
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 3. 运行测试（等同于 CI 中的 pytest -v）
+python -m pytest -v
+```
+
+测试通过后，将输出全部用例的 `PASSED` 结果以及汇总信息。
+
+#### 前端：安装依赖并运行 TypeScript 类型检查
+
+```bash
+cd frontend
+
+# 1. 安装依赖（CI 使用 npm ci，本地使用 npm install 亦可）
+npm ci   # 或 npm install
+
+# 2. 执行 TypeScript 类型检查（等同于 CI 中的 vue-tsc --noEmit）
+npx vue-tsc --noEmit
+```
+
+若无类型错误，命令将正常退出且无额外输出；若存在类型问题，会打印具体的错误位置和信息。
+
+也可以直接运行完整的构建命令（包含类型检查 + Vite 打包）：
+
+```bash
+npm run build
+```
