@@ -7,7 +7,6 @@ import {
   NCard,
   NDescriptions,
   NDescriptionsItem,
-  NSpace,
   NTag,
   useMessage,
 } from 'naive-ui'
@@ -70,17 +69,9 @@ onMounted(loadExchange)
       <n-descriptions-item label="完成状态">
         <component :is="statusTag" />
       </n-descriptions-item>
-      <n-descriptions-item label="备注">
-        {{ exchange.notes ?? '-' }}
-      </n-descriptions-item>
     </n-descriptions>
     <template #footer>
-      <n-space>
-        <n-button type="primary" @click="router.push(`/edit/${exchange?.id}`)">
-          编辑
-        </n-button>
-        <n-button @click="router.push('/list')">返回列表</n-button>
-      </n-space>
+      <n-button @click="router.push('/list')">返回列表</n-button>
     </template>
   </n-card>
 </template>

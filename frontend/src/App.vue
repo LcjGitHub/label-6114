@@ -20,6 +20,10 @@ const route = useRoute()
 const isContactActive = computed(() =>
   ['contacts', 'contact-create', 'contact-edit'].includes(route.name as string)
 )
+
+const isExchangeActive = computed(() =>
+  ['list', 'create', 'edit', 'detail'].includes(route.name as string)
+)
 </script>
 
 <template>
@@ -40,7 +44,7 @@ const isContactActive = computed(() =>
             </n-button>
             <n-button
               quaternary
-              :type="route.name === 'list' ? 'primary' : 'default'"
+              :type="isExchangeActive ? 'primary' : 'default'"
               @click="router.push('/list')"
             >
               记录列表
