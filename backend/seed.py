@@ -11,6 +11,7 @@ SEED_DATA = [
         "sent_date": date(2025, 1, 10),
         "received_date": date(2025, 1, 25),
         "is_completed": True,
+        "notes": "精装版，书况良好，小林附赠了手写信",
     },
     {
         "book_title": "挪威的森林",
@@ -18,6 +19,7 @@ SEED_DATA = [
         "sent_date": date(2025, 2, 5),
         "received_date": None,
         "is_completed": False,
+        "notes": "阿杰说两周内寄出回寄",
     },
     {
         "book_title": "三体",
@@ -25,6 +27,7 @@ SEED_DATA = [
         "sent_date": date(2025, 3, 1),
         "received_date": date(2025, 3, 18),
         "is_completed": True,
+        "notes": None,
     },
     {
         "book_title": "活着",
@@ -32,6 +35,7 @@ SEED_DATA = [
         "sent_date": date(2025, 4, 12),
         "received_date": None,
         "is_completed": False,
+        "notes": "等小月期末考试结束后再联系",
     },
     {
         "book_title": "小王子",
@@ -39,6 +43,7 @@ SEED_DATA = [
         "sent_date": date(2025, 5, 8),
         "received_date": date(2025, 5, 20),
         "is_completed": True,
+        "notes": "中英双语版，约定下次换科幻类",
     },
 ]
 

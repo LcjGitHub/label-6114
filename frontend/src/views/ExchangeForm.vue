@@ -36,6 +36,7 @@ const form = ref<ExchangeFormData>({
   sent_date: null,
   received_date: null,
   is_completed: false,
+  notes: null,
 })
 
 const rules: FormRules = {
@@ -69,6 +70,7 @@ async function loadExchange() {
       sent_date: data.sent_date,
       received_date: data.received_date,
       is_completed: data.is_completed,
+      notes: data.notes,
     }
   } catch {
     message.error('加载记录失败')
@@ -122,6 +124,17 @@ onMounted(loadExchange)
       </n-form-item>
       <n-form-item label="是否完成" path="is_completed">
         <n-switch v-model:value="form.is_completed" />
+      </n-form-item>
+      <n-form-item label="备注" path="notes">
+        <n-input
+          v-model:value="form.notes"
+          type="textarea"
+          placeholder="请输入备注说明（选填）"
+          :autosize="{ minRows: 3, maxRows: 6 }"
+          maxlength="500"
+          show-count
+          clearable
+        />
       </n-form-item>
       <n-form-item>
         <n-space>

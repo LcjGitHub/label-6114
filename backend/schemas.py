@@ -9,6 +9,7 @@ class ExchangeBase(BaseModel):
     sent_date: date | None = None
     received_date: date | None = None
     is_completed: bool = False
+    notes: str | None = None
 
 
 class ExchangeCreate(ExchangeBase):
@@ -21,6 +22,7 @@ class ExchangeUpdate(BaseModel):
     sent_date: date | None = None
     received_date: date | None = None
     is_completed: bool | None = None
+    notes: str | None = None
 
 
 class ExchangeOut(ExchangeBase):

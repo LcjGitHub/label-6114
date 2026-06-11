@@ -55,6 +55,13 @@ const columns: DataTableColumns<Exchange> = [
       ),
   },
   {
+    title: '备注',
+    key: 'notes',
+    width: 200,
+    ellipsis: { tooltip: true },
+    render: (row) => row.notes ?? '-',
+  },
+  {
     title: '操作',
     key: 'actions',
     render: (row) =>

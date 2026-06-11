@@ -5,6 +5,7 @@ export interface Exchange {
   sent_date: string | null
   received_date: string | null
   is_completed: boolean
+  notes: string | null
 }
 
 export interface ExchangeFormData {
@@ -13,6 +14,7 @@ export interface ExchangeFormData {
   sent_date: string | null
   received_date: string | null
   is_completed: boolean
+  notes: string | null
 }
 
 export interface Statistics {

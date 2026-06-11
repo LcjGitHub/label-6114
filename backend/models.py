@@ -15,6 +15,7 @@ class Exchange(Base):
     sent_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     received_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 class Contact(Base):

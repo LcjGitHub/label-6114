@@ -1,5 +1,6 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from database import Base, SessionLocal, engine, get_db
@@ -8,6 +9,15 @@ from schemas import ContactCreate, ContactOut, ContactUpdate, ExchangeCreate, Ex
 from seed import seed_contacts, seed_exchanges
 
 Base.metadata.create_all(bind=engine)
+
+
+def migrate_database():
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        exchanges_columns = [col["name"] for col in inspector.get_columns("exchanges")]
+        if "notes" not in exchanges_columns:
+            conn.execute(text("ALTER TABLE exchanges ADD COLUMN notes VARCHAR(500)"))
+
 
 app = FastAPI(title="Zine Exchange API")
 
@@ -22,6 +32,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
+    migrate_database()
     db = SessionLocal()
     try:
         seed_exchanges(db)
