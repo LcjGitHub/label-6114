@@ -12,9 +12,14 @@ import {
   dateZhCN,
 } from 'naive-ui'
 import { useRouter, useRoute } from 'vue-router'
+import { computed } from 'vue'
 
 const router = useRouter()
 const route = useRoute()
+
+const isContactActive = computed(() =>
+  ['contacts', 'contact-create', 'contact-edit'].includes(route.name as string)
+)
 </script>
 
 <template>
@@ -43,7 +48,7 @@ const route = useRoute()
             <n-button type="primary" @click="router.push('/new')">新增记录</n-button>
             <n-button
               quaternary
-              :type="route.name === 'contacts' ? 'primary' : 'default'"
+              :type="isContactActive ? 'primary' : 'default'"
               @click="router.push('/contacts')"
             >
               通讯录

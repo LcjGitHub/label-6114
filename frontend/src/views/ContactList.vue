@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, computed } from 'vue'
+import { h, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFetch } from '@vueuse/core'
 import {
@@ -18,10 +18,16 @@ const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 
-const { data, isFetching, execute } = useFetch('/api/contacts', {
+const { data, isFetching, error, execute } = useFetch('/api/contacts', {
   immediate: true,
   refetch: true,
 }).json<Contact[]>()
+
+watch(error, (err) => {
+  if (err) {
+    message.error('加载联系人列表失败')
+  }
+})
 
 const contacts = computed(() => data.value ?? [])
 
