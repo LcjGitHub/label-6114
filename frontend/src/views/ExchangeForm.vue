@@ -28,6 +28,7 @@ const formRef = ref<FormInst | null>(null)
 const submitting = ref(false)
 const loading = ref(false)
 const dateAutoCompleted = ref(false)
+const isProgrammaticToggle = ref(false)
 
 const isEdit = computed(() => Boolean(props.id))
 
@@ -61,9 +62,11 @@ const receivedTimestamp = computed({
     if (value) {
       if (!form.value.is_completed) {
         dateAutoCompleted.value = true
+        isProgrammaticToggle.value = true
+        form.value.is_completed = true
       }
-      form.value.is_completed = true
     } else if (hadDate && dateAutoCompleted.value) {
+      isProgrammaticToggle.value = true
       form.value.is_completed = false
       dateAutoCompleted.value = false
     }
@@ -92,6 +95,10 @@ async function loadExchange() {
 }
 
 function onCompletedManualToggle() {
+  if (isProgrammaticToggle.value) {
+    isProgrammaticToggle.value = false
+    return
+  }
   dateAutoCompleted.value = false
 }
 
