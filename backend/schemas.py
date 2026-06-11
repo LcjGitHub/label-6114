@@ -100,3 +100,23 @@ class ImportResultOut(BaseModel):
     success_count: int
     failure_count: int
     errors: list[str] = []
+
+
+class LabelBase(BaseModel):
+    name: str
+    color: str = "#18a058"
+
+
+class LabelCreate(LabelBase):
+    pass
+
+
+class LabelUpdate(BaseModel):
+    name: str | None = None
+    color: str | None = None
+
+
+class LabelOut(LabelBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)

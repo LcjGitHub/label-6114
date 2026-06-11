@@ -26,6 +26,10 @@ const isExchangeActive = computed(() =>
 )
 
 const isTrendActive = computed(() => route.name === 'trend')
+
+const isLabelActive = computed(() =>
+  ['labels', 'label-create', 'label-edit'].includes(route.name as string)
+)
 </script>
 
 <template>
@@ -67,6 +71,14 @@ const isTrendActive = computed(() => route.name === 'trend')
               通讯录
             </n-button>
             <n-button type="primary" @click="router.push('/contacts/new')">新增联系人</n-button>
+            <n-button
+              quaternary
+              :type="isLabelActive ? 'primary' : 'default'"
+              @click="router.push('/labels')"
+            >
+              标签管理
+            </n-button>
+            <n-button type="primary" @click="router.push('/labels/new')">新增标签</n-button>
           </n-space>
         </n-space>
       </n-layout-header>

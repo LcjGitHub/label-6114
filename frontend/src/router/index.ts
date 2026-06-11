@@ -7,6 +7,8 @@ import ContactList from '@/views/ContactList.vue'
 import ContactForm from '@/views/ContactForm.vue'
 import ContactDetail from '@/views/ContactDetail.vue'
 import TrendAnalysis from '@/views/TrendAnalysis.vue'
+import LabelList from '@/views/LabelList.vue'
+import LabelForm from '@/views/LabelForm.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -21,6 +23,9 @@ const router = createRouter({
     { path: '/contacts/new', name: 'contact-create', component: ContactForm },
     { path: '/contacts/edit/:id', name: 'contact-edit', component: ContactForm, props: true },
     { path: '/contacts/detail/:id', name: 'contact-detail', component: ContactDetail, props: true },
+    { path: '/labels', name: 'labels', component: LabelList },
+    { path: '/labels/new', name: 'label-create', component: LabelForm },
+    { path: '/labels/edit/:id', name: 'label-edit', component: LabelForm, props: true },
   ],
 })
 
