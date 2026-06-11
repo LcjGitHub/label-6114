@@ -1,30 +1,63 @@
 <script setup lang="ts">
-import { h, computed, ref } from 'vue'
+import { h, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useFetch } from '@vueuse/core'
 import { format, parseISO } from 'date-fns'
 import {
   NButton,
   NDataTable,
+  NInput,
+  NSelect,
   NSpace,
   NTag,
   useDialog,
   useMessage,
   type DataTableColumns,
+  type SelectOption,
 } from 'naive-ui'
-import { deleteExchange, exportExchanges } from '@/api/exchange'
+import { deleteExchange, exportExchanges, fetchExchanges } from '@/api/exchange'
 import type { Exchange } from '@/types/exchange'
 
 const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 
-const { data, isFetching, execute } = useFetch('/api/exchanges', {
-  immediate: true,
-  refetch: true,
-}).json<Exchange[]>()
+const keyword = ref('')
+const status = ref<'completed' | 'in_progress' | ''>('')
+const exchanges = ref<Exchange[]>([])
+const isFetching = ref(false)
+const exporting = ref(false)
 
-const exchanges = computed(() => data.value ?? [])
+const statusOptions: SelectOption[] = [
+  { label: '全部状态', value: '' },
+  { label: '已完成', value: 'completed' },
+  { label: '进行中', value: 'in_progress' },
+]
+
+async function loadExchanges() {
+  isFetching.value = true
+  try {
+    exchanges.value = await fetchExchanges({
+      keyword: keyword.value || undefined,
+      status: status.value || undefined,
+    })
+  } catch {
+    message.error('加载列表失败')
+  } finally {
+    isFetching.value = false
+  }
+}
+
+function handleSearch() {
+  loadExchanges()
+}
+
+function handleStatusChange() {
+  loadExchanges()
+}
+
+onMounted(() => {
+  loadExchanges()
+})
 
 function formatDate(value: string | null) {
   if (!value) return '-'
@@ -87,8 +120,6 @@ const columns: DataTableColumns<Exchange> = [
   },
 ]
 
-const exporting = ref(false)
-
 async function handleExport() {
   if (exporting.value) return
   exporting.value = true
@@ -120,7 +151,7 @@ function handleDelete(row: Exchange) {
       try {
         await deleteExchange(row.id)
         message.success('已删除')
-        await execute()
+        await loadExchanges()
       } catch {
         message.error('删除失败')
       }
@@ -131,7 +162,23 @@ function handleDelete(row: Exchange) {
 
 <template>
   <n-space vertical :size="16" style="width: 100%">
-    <n-space justify="end">
+    <n-space justify="space-between">
+      <n-space>
+        <n-input
+          v-model:value="keyword"
+          placeholder="搜索书名或对方昵称"
+          clearable
+          style="width: 280px"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        />
+        <n-select
+          v-model:value="status"
+          :options="statusOptions"
+          style="width: 160px"
+          @update:value="handleStatusChange"
+        />
+      </n-space>
       <n-button type="primary" :loading="exporting" @click="handleExport">
         导出记录
       </n-button>

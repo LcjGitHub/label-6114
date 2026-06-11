@@ -1,7 +1,7 @@
 import csv
 from io import StringIO
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sqlalchemy import inspect, text
@@ -46,8 +46,22 @@ def on_startup():
 
 
 @app.get("/api/exchanges", response_model=list[ExchangeOut])
-def list_exchanges(db: Session = Depends(get_db)):
-    return db.query(Exchange).order_by(Exchange.id.desc()).all()
+def list_exchanges(
+    keyword: str | None = Query(default=None, description="关键词，匹配书名或对方昵称"),
+    status: str | None = Query(default=None, description="状态：completed-已完成，in_progress-进行中"),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Exchange)
+    if keyword:
+        query = query.filter(
+            Exchange.book_title.ilike(f"%{keyword}%")
+            | Exchange.counterpart_nickname.ilike(f"%{keyword}%")
+        )
+    if status == "completed":
+        query = query.filter(Exchange.is_completed == True)
+    elif status == "in_progress":
+        query = query.filter(Exchange.is_completed == False)
+    return query.order_by(Exchange.id.desc()).all()
 
 
 def generate_csv(db: Session):

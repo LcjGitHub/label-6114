@@ -5,8 +5,13 @@ const api = axios.create({
   baseURL: '/api',
 })
 
-export async function fetchExchanges(): Promise<Exchange[]> {
-  const { data } = await api.get<Exchange[]>('/exchanges')
+export interface ExchangeQueryParams {
+  keyword?: string
+  status?: 'completed' | 'in_progress' | ''
+}
+
+export async function fetchExchanges(params?: ExchangeQueryParams): Promise<Exchange[]> {
+  const { data } = await api.get<Exchange[]>('/exchanges', { params })
   return data
 }
 
