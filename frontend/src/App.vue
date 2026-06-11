@@ -62,7 +62,11 @@ const isExchangeActive = computed(() =>
         </n-space>
       </n-layout-header>
       <n-layout-content style="padding: 24px; max-width: 960px; margin: 0 auto">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <KeepAlive>
+            <component :is="Component" />
+          </KeepAlive>
+        </router-view>
       </n-layout-content>
     </n-layout>
       </n-dialog-provider>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref, onMounted, watch } from 'vue'
+import { h, ref, onMounted, watch, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { format, parseISO } from 'date-fns'
 import {
@@ -91,12 +91,16 @@ async function loadStatistics() {
   try {
     statistics.value = await fetchStatistics()
   } catch {
-    // silent
+    message.error('加载统计数据失败')
   }
 }
 
 onMounted(() => {
   loadExchanges()
+  loadStatistics()
+})
+
+onActivated(() => {
   loadStatistics()
 })
 
