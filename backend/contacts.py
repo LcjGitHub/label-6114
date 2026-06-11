@@ -1,0 +1,60 @@
+from fastapi import APIRouter, HTTPException, Query, Depends
+from sqlalchemy.orm import Session
+
+from database import get_db
+from models import Contact
+from schemas import ContactCreate, ContactOut, ContactUpdate, PaginatedOut
+
+router = APIRouter(prefix="/api", tags=["contacts"])
+
+
+@router.get("/contacts", response_model=PaginatedOut[ContactOut])
+def list_contacts(
+    page: int = Query(default=1, ge=1, description="页码"),
+    page_size: int = Query(default=10, ge=1, le=100, description="每页条数"),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Contact)
+    total = query.count()
+    items = query.order_by(Contact.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    return PaginatedOut(items=items, total=total)
+
+
+@router.get("/contacts/{contact_id}", response_model=ContactOut)
+def get_contact(contact_id: int, db: Session = Depends(get_db)):
+    contact = db.get(Contact, contact_id)
+    if not contact:
+        raise HTTPException(status_code=404, detail="联系人不存在")
+    return contact
+
+
+@router.post("/contacts", response_model=ContactOut, status_code=201)
+def create_contact(payload: ContactCreate, db: Session = Depends(get_db)):
+    contact = Contact(**payload.model_dump())
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
+    return contact
+
+
+@router.put("/contacts/{contact_id}", response_model=ContactOut)
+def update_contact(
+    contact_id: int, payload: ContactUpdate, db: Session = Depends(get_db)
+):
+    contact = db.get(Contact, contact_id)
+    if not contact:
+        raise HTTPException(status_code=404, detail="联系人不存在")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(contact, key, value)
+    db.commit()
+    db.refresh(contact)
+    return contact
+
+
+@router.delete("/contacts/{contact_id}", status_code=204)
+def delete_contact(contact_id: int, db: Session = Depends(get_db)):
+    contact = db.get(Contact, contact_id)
+    if not contact:
+        raise HTTPException(status_code=404, detail="联系人不存在")
+    db.delete(contact)
+    db.commit()

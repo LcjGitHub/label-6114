@@ -1,16 +1,11 @@
-import csv
-from io import StringIO
-
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from sqlalchemy import inspect, text
-from sqlalchemy.orm import Session
 
-from database import Base, SessionLocal, engine, get_db
-from models import Contact, Exchange
-from schemas import BatchDeleteIn, ContactCreate, ContactOut, ContactUpdate, ExchangeCreate, ExchangeOut, ExchangeUpdate, PaginatedOut, StatisticsOut
+from database import Base, SessionLocal, engine
 from seed import seed_contacts, seed_exchanges
+from exchanges import router as exchanges_router
+from contacts import router as contacts_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -33,6 +28,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(exchanges_router)
+app.include_router(contacts_router)
+
 
 @app.on_event("startup")
 def on_startup():
@@ -43,173 +41,3 @@ def on_startup():
         seed_contacts(db)
     finally:
         db.close()
-
-
-@app.get("/api/exchanges", response_model=PaginatedOut[ExchangeOut])
-def list_exchanges(
-    keyword: str | None = Query(default=None, description="关键词，匹配书名或对方昵称"),
-    status: str | None = Query(default=None, description="状态：completed-已完成，in_progress-进行中"),
-    page: int = Query(default=1, ge=1, description="页码"),
-    page_size: int = Query(default=10, ge=1, le=100, description="每页条数"),
-    db: Session = Depends(get_db),
-):
-    query = db.query(Exchange)
-    if keyword:
-        query = query.filter(
-            Exchange.book_title.ilike(f"%{keyword}%")
-            | Exchange.counterpart_nickname.ilike(f"%{keyword}%")
-        )
-    if status == "completed":
-        query = query.filter(Exchange.is_completed == True)
-    elif status == "in_progress":
-        query = query.filter(Exchange.is_completed == False)
-    total = query.count()
-    items = query.order_by(Exchange.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
-    return PaginatedOut(items=items, total=total)
-
-
-def generate_csv(db: Session):
-    output = StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["书名", "对方昵称", "寄出日期", "收到日期", "是否完成"])
-    yield output.getvalue()
-    output.seek(0)
-    output.truncate(0)
-
-    exchanges = db.query(Exchange).order_by(Exchange.id.desc()).all()
-    for exchange in exchanges:
-        writer.writerow([
-            exchange.book_title,
-            exchange.counterpart_nickname,
-            exchange.sent_date.isoformat() if exchange.sent_date else "",
-            exchange.received_date.isoformat() if exchange.received_date else "",
-            "是" if exchange.is_completed else "否",
-        ])
-        yield output.getvalue()
-        output.seek(0)
-        output.truncate(0)
-
-
-@app.get("/api/exchanges/export")
-def export_exchanges(db: Session = Depends(get_db)):
-    return StreamingResponse(
-        generate_csv(db),
-        media_type="text/csv; charset=utf-8",
-        headers={
-            "Content-Disposition": "attachment; filename=交换记录.csv",
-        },
-    )
-
-
-@app.get("/api/exchanges/{exchange_id}", response_model=ExchangeOut)
-def get_exchange(exchange_id: int, db: Session = Depends(get_db)):
-    exchange = db.get(Exchange, exchange_id)
-    if not exchange:
-        raise HTTPException(status_code=404, detail="记录不存在")
-    return exchange
-
-
-@app.post("/api/exchanges", response_model=ExchangeOut, status_code=201)
-def create_exchange(payload: ExchangeCreate, db: Session = Depends(get_db)):
-    exchange = Exchange(**payload.model_dump())
-    db.add(exchange)
-    db.commit()
-    db.refresh(exchange)
-    return exchange
-
-
-@app.put("/api/exchanges/{exchange_id}", response_model=ExchangeOut)
-def update_exchange(
-    exchange_id: int, payload: ExchangeUpdate, db: Session = Depends(get_db)
-):
-    exchange = db.get(Exchange, exchange_id)
-    if not exchange:
-        raise HTTPException(status_code=404, detail="记录不存在")
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(exchange, key, value)
-    db.commit()
-    db.refresh(exchange)
-    return exchange
-
-
-@app.delete("/api/exchanges/{exchange_id}", status_code=204)
-def delete_exchange(exchange_id: int, db: Session = Depends(get_db)):
-    exchange = db.get(Exchange, exchange_id)
-    if not exchange:
-        raise HTTPException(status_code=404, detail="记录不存在")
-    db.delete(exchange)
-    db.commit()
-
-
-@app.post("/api/exchanges/batch-delete", status_code=204)
-def batch_delete_exchanges(payload: BatchDeleteIn, db: Session = Depends(get_db)):
-    if not payload.ids:
-        raise HTTPException(status_code=400, detail="请选择要删除的记录")
-    deleted_count = db.query(Exchange).filter(Exchange.id.in_(payload.ids)).delete(synchronize_session=False)
-    db.commit()
-    if deleted_count == 0:
-        raise HTTPException(status_code=404, detail="未找到要删除的记录")
-
-
-@app.get("/api/statistics", response_model=StatisticsOut)
-def get_statistics(db: Session = Depends(get_db)):
-    total_count = db.query(Exchange).count()
-    completed_count = db.query(Exchange).filter(Exchange.is_completed == True).count()
-    in_progress_count = total_count - completed_count
-    return StatisticsOut(
-        total_count=total_count,
-        completed_count=completed_count,
-        in_progress_count=in_progress_count,
-    )
-
-
-@app.get("/api/contacts", response_model=PaginatedOut[ContactOut])
-def list_contacts(
-    page: int = Query(default=1, ge=1, description="页码"),
-    page_size: int = Query(default=10, ge=1, le=100, description="每页条数"),
-    db: Session = Depends(get_db),
-):
-    query = db.query(Contact)
-    total = query.count()
-    items = query.order_by(Contact.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
-    return PaginatedOut(items=items, total=total)
-
-
-@app.get("/api/contacts/{contact_id}", response_model=ContactOut)
-def get_contact(contact_id: int, db: Session = Depends(get_db)):
-    contact = db.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="联系人不存在")
-    return contact
-
-
-@app.post("/api/contacts", response_model=ContactOut, status_code=201)
-def create_contact(payload: ContactCreate, db: Session = Depends(get_db)):
-    contact = Contact(**payload.model_dump())
-    db.add(contact)
-    db.commit()
-    db.refresh(contact)
-    return contact
-
-
-@app.put("/api/contacts/{contact_id}", response_model=ContactOut)
-def update_contact(
-    contact_id: int, payload: ContactUpdate, db: Session = Depends(get_db)
-):
-    contact = db.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="联系人不存在")
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(contact, key, value)
-    db.commit()
-    db.refresh(contact)
-    return contact
-
-
-@app.delete("/api/contacts/{contact_id}", status_code=204)
-def delete_contact(contact_id: int, db: Session = Depends(get_db)):
-    contact = db.get(Contact, contact_id)
-    if not contact:
-        raise HTTPException(status_code=404, detail="联系人不存在")
-    db.delete(contact)
-    db.commit()
