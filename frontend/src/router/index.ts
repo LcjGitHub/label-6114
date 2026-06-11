@@ -5,6 +5,7 @@ import ExchangeDetail from '@/views/ExchangeDetail.vue'
 import Overview from '@/views/Overview.vue'
 import ContactList from '@/views/ContactList.vue'
 import ContactForm from '@/views/ContactForm.vue'
+import ContactDetail from '@/views/ContactDetail.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,6 +18,7 @@ const router = createRouter({
     { path: '/contacts', name: 'contacts', component: ContactList },
     { path: '/contacts/new', name: 'contact-create', component: ContactForm },
     { path: '/contacts/edit/:id', name: 'contact-edit', component: ContactForm, props: true },
+    { path: '/contacts/detail/:id', name: 'contact-detail', component: ContactDetail, props: true },
   ],
 })
 

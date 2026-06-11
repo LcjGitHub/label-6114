@@ -18,7 +18,7 @@ const router = useRouter()
 const route = useRoute()
 
 const isContactActive = computed(() =>
-  ['contacts', 'contact-create', 'contact-edit'].includes(route.name as string)
+  ['contacts', 'contact-create', 'contact-edit', 'contact-detail'].includes(route.name as string)
 )
 
 const isExchangeActive = computed(() =>

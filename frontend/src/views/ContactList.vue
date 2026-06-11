@@ -101,6 +101,11 @@ const columns: DataTableColumns<Contact> = [
         default: () => [
           h(
             NButton,
+            { size: 'small', onClick: () => router.push(`/contacts/detail/${row.id}`) },
+            { default: () => '查看' }
+          ),
+          h(
+            NButton,
             { size: 'small', onClick: () => router.push(`/contacts/edit/${row.id}`) },
             { default: () => '编辑' }
           ),
