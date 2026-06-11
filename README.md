@@ -64,6 +64,7 @@ npm run dev
 |------|------|------|
 | GET | `/api/statistics` | 统计概览（总记录数、已完成数、进行中数） |
 | GET | `/api/exchanges` | 列表 |
+| GET | `/api/exchanges/export` | 导出全部交换记录为 CSV 文件（带表头） |
 | GET | `/api/exchanges/{id}` | 详情 |
 | POST | `/api/exchanges` | 新增 |
 | PUT | `/api/exchanges/{id}` | 更新 |

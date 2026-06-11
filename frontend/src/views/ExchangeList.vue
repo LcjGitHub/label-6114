@@ -92,7 +92,7 @@ async function handleExport() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'exchange_records.csv'
+    link.download = '交换记录.csv'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -128,7 +128,7 @@ function handleDelete(row: Exchange) {
   <n-space vertical :size="16" style="width: 100%">
     <n-space justify="end">
       <n-button type="primary" :loading="exporting" @click="handleExport">
-        导出 CSV
+        导出记录
       </n-button>
     </n-space>
     <n-data-table
