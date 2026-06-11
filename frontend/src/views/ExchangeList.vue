@@ -69,6 +69,11 @@ const columns: DataTableColumns<Exchange> = [
         default: () => [
           h(
             NButton,
+            { size: 'small', onClick: () => router.push(`/detail/${row.id}`) },
+            { default: () => '查看' }
+          ),
+          h(
+            NButton,
             { size: 'small', onClick: () => router.push(`/edit/${row.id}`) },
             { default: () => '编辑' }
           ),
